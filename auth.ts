@@ -1,38 +1,16 @@
 import NextAuth from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
-import Kakao from "next-auth/providers/kakao"
+import { authConfig } from "./auth.config"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+    ...authConfig,
     adapter: PrismaAdapter(prisma),
-    providers: [
-        Kakao({
-            clientId: process.env.KAKAO_CLIENT_ID!,
-            clientSecret: process.env.KAKAO_CLIENT_SECRET || "kakao",
-        }),
-    ],
-    session: {
-        strategy: "jwt",
-    },
-    pages: {
-        signIn: "/login",
-    },
     callbacks: {
-        authorized({ auth: session, request }) {
-            const isLoggedIn = !!session?.user
-            const { pathname } = request.nextUrl
-
-            // Not logged in → always redirect to /login
-            if (!isLoggedIn) {
-                return false // NextAuth redirects to pages.signIn (/login)
-            }
-
-            return true
-        },
+        ...authConfig.callbacks,
         async jwt({ token, user, trigger }) {
             if (user) {
                 token.id = user.id
-                // Check onboarding status for new sign-in
                 try {
                     const dbUser = await prisma.user.findUnique({
                         where: { id: user.id as string },
