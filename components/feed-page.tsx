@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Heart, MessageCircle, Waves, Clock, MapPin, ChevronDown, ChevronUp, Send, Trash2, Pencil } from "lucide-react"
+import { Heart, MessageCircle, Clock, MapPin, ChevronDown, ChevronUp, Send, Trash2, Pencil } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
@@ -23,11 +23,9 @@ interface RunningPost {
   comment: string
   photo?: string
   likes: number
-  waves: number
   comments: PostComment[]
   createdAt: string
   liked: boolean
-  waved: boolean
 }
 
 function timeAgo(iso: string): string {
@@ -45,9 +43,7 @@ function timeAgo(iso: string): string {
 function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () => void; onEdit?: (post: RunningPost) => void }) {
   const { data: session } = useSession()
   const [liked, setLiked] = useState(post.liked)
-  const [waved, setWaved] = useState(post.waved)
   const [likeCount, setLikeCount] = useState(post.likes)
-  const [waveCount, setWaveCount] = useState(post.waves)
   const [showComments, setShowComments] = useState(false)
   const [comments, setComments] = useState(post.comments)
   const [newComment, setNewComment] = useState("")
@@ -65,21 +61,6 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
     } catch {
       setLiked(prev)
       setLikeCount(prev ? likeCount : likeCount - 1)
-    }
-  }
-
-  const handleWave = async () => {
-    const prev = waved
-    setWaved(!waved)
-    setWaveCount(waved ? waveCount - 1 : waveCount + 1)
-    setRippleId("wave")
-    setTimeout(() => setRippleId(null), 600)
-
-    try {
-      await fetch(`/api/posts/${post.id}/wave`, { method: "POST" })
-    } catch {
-      setWaved(prev)
-      setWaveCount(prev ? waveCount : waveCount - 1)
     }
   }
 
@@ -219,19 +200,6 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
           <span className="relative z-10 font-medium">{likeCount}</span>
         </button>
         <button
-          onClick={handleWave}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-sm relative overflow-hidden",
-            waved ? "text-primary" : "text-muted-foreground"
-          )}
-        >
-          {rippleId === "wave" && (
-            <span className="absolute inset-0 bg-primary/10 rounded-full animate-ripple" />
-          )}
-          <Waves className={cn("w-4 h-4 relative z-10", waved && "stroke-[2.5px]")} />
-          <span className="relative z-10 font-medium">{waveCount}</span>
-        </button>
-        <button
           onClick={() => setShowComments(!showComments)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-muted-foreground text-sm ml-auto"
         >
@@ -322,7 +290,7 @@ export function FeedPage({
     <div className="space-y-4">
       {posts.length === 0 ? (
         <div className="bg-card rounded-2xl border border-border/50 p-8 text-center">
-          <Waves className="w-8 h-8 text-primary/30 mx-auto mb-3" />
+          <Heart className="w-8 h-8 text-primary/30 mx-auto mb-3" />
           <p className="text-sm font-medium text-card-foreground">아직 인증글이 없어요</p>
           <p className="text-xs text-muted-foreground mt-1">첫 러닝을 인증해보세요! 🏃</p>
         </div>

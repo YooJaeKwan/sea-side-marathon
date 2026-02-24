@@ -27,7 +27,6 @@ model User {
   posts    Post[]
   comments Comment[]
   likes    Like[]
-  waves    Wave[]
   badges   UserBadge[]
 }
 
@@ -83,7 +82,6 @@ model Post {
 
   comments Comment[]
   likes    Like[]
-  waves    Wave[]
 }
 
 model Comment {
@@ -100,18 +98,6 @@ model Comment {
 }
 
 model Like {
-  id     String @id @default(cuid())
-  postId String
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@unique([postId, userId])
-}
-
-model Wave {
   id     String @id @default(cuid())
   postId String
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)

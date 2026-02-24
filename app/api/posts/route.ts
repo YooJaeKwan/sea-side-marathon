@@ -21,8 +21,7 @@ export async function GET() {
                 },
             },
             likes: { select: { userId: true } },
-            waves: { select: { userId: true } },
-            _count: { select: { likes: true, waves: true, comments: true } },
+            _count: { select: { likes: true, comments: true } },
         },
     })
 
@@ -41,7 +40,6 @@ export async function GET() {
         comment: post.content,
         photo: post.imageUrl,
         likes: post._count.likes,
-        waves: post._count.waves,
         comments: post.comments.map((c) => ({
             id: c.id,
             user: {
@@ -53,7 +51,6 @@ export async function GET() {
         })),
         createdAt: post.createdAt.toISOString(),
         liked: post.likes.some((l) => l.userId === session.user!.id),
-        waved: post.waves.some((w) => w.userId === session.user!.id),
     }))
 
     return NextResponse.json(formatted)
