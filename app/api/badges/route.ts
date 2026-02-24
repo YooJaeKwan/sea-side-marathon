@@ -32,10 +32,10 @@ export async function GET() {
     const allBadges = await prisma.badge.findMany()
 
     // 3. Simple stats
-    const totalKm = user.posts.reduce((sum, p) => sum + p.distance, 0)
-    const totalLikesReceived = user.posts.reduce((sum, p) => sum + p._count.likes, 0)
-    const totalWavesReceived = user.posts.reduce((sum, p) => sum + p._count.waves, 0)
-    const times = user.posts.map(p => new Date(p.createdAt).getHours())
+    const totalKm = user.posts.reduce((sum: number, p: any) => sum + (p.distance || 0), 0)
+    const totalLikesReceived = user.posts.reduce((sum: number, p: any) => sum + (p._count?.likes || 0), 0)
+    const totalWavesReceived = user.posts.reduce((sum: number, p: any) => sum + (p._count?.waves || 0), 0)
+    const times = user.posts.map((p: any) => new Date(p.createdAt).getHours())
 
     // 4. Calculate which badges should be awarded
     const earnedBadgeNames: string[] = []
@@ -44,23 +44,23 @@ export async function GET() {
     if (totalKm >= 50) earnedBadgeNames.push("영종도 앰배서더")
     if (totalKm >= 100) earnedBadgeNames.push("울트라 러너")
     if (totalKm >= 200) earnedBadgeNames.push("지구 한 바퀴 꿈나무")
-    if (times.some(h => h < 6)) earnedBadgeNames.push("새벽 공기 수집가")
-    if (times.some(h => h >= 22)) earnedBadgeNames.push("심야의 질주")
+    if (times.some((h: number) => h < 6)) earnedBadgeNames.push("새벽 공기 수집가")
+    if (times.some((h: number) => h >= 22)) earnedBadgeNames.push("심야의 질주")
     if (totalWavesReceived >= 10) earnedBadgeNames.push("베스트 메이트")
     if (totalLikesReceived >= 30) earnedBadgeNames.push("인기쟁이")
     if (user.comments.length >= 20) earnedBadgeNames.push("마당발")
-    if (user.posts.some(p => p.content?.includes("비"))) earnedBadgeNames.push("폭우를 뚫고")
+    if (user.posts.some((p: any) => p.content?.includes("비"))) earnedBadgeNames.push("폭우를 뚫고")
 
     // Streak Calculation
     let streakDays = 0
     if (user.posts.length > 0) {
         const todayAtMidnight = new Date()
         todayAtMidnight.setHours(0, 0, 0, 0)
-        const postDates = [...new Set(user.posts.map((p) => {
+        const postDates = [...new Set(user.posts.map((p: any) => {
             const d = new Date(p.createdAt)
             d.setHours(0, 0, 0, 0)
             return d.getTime()
-        }))].sort((a, b) => b - a)
+        }))].sort((a: any, b: any) => b - a)
 
         const diffMs = todayAtMidnight.getTime() - postDates[0]
         const diffDays = diffMs / (1000 * 60 * 60 * 24)
@@ -96,12 +96,17 @@ export async function GET() {
     if (user.likes.length + user.waves.length >= 5) earnedBadgeNames.push("페이스 메이커")
 
     // 5. Save newly earned badges
-    const toAward = allBadges.filter(b => earnedBadgeNames.includes(b.name))
+    const alreadyEarned = await prisma.userBadge.findMany({
+        where: { userId },
+        select: { badgeId: true }
+    })
+    const alreadyEarnedIds = new Set(alreadyEarned.map(ub => ub.badgeId))
+
+    const toAward = allBadges.filter(b => earnedBadgeNames.includes(b.name) && !alreadyEarnedIds.has(b.id))
+
     for (const badge of toAward) {
-        await prisma.userBadge.upsert({
-            where: { userId_badgeId: { userId, badgeId: badge.id } },
-            update: {},
-            create: { userId, badgeId: badge.id }
+        await prisma.userBadge.create({
+            data: { userId, badgeId: badge.id }
         })
     }
 

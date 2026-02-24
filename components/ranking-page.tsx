@@ -1,7 +1,7 @@
 "use client"
 
 import { Crown, Medal, Award, Waves } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 
@@ -113,6 +113,7 @@ export function RankingPage() {
                     {/* 2nd place */}
                     <div className="flex flex-col items-center w-24">
                       <Avatar className={cn("w-14 h-14 ring-2", rankIcons[1].ring)}>
+                        {ranking[1].avatar && <AvatarImage src={ranking[1].avatar} alt={ranking[1].name} />}
                         <AvatarFallback className={cn("text-sm font-bold", rankIcons[1].bg, rankIcons[1].color)}>
                           {ranking[1].initials}
                         </AvatarFallback>
@@ -128,6 +129,7 @@ export function RankingPage() {
                     {/* 1st place */}
                     <div className="flex flex-col items-center w-24">
                       <Avatar className={cn("w-16 h-16 ring-2", rankIcons[0].ring)}>
+                        {ranking[0].avatar && <AvatarImage src={ranking[0].avatar} alt={ranking[0].name} />}
                         <AvatarFallback className={cn("text-base font-bold", rankIcons[0].bg, rankIcons[0].color)}>
                           {ranking[0].initials}
                         </AvatarFallback>
@@ -143,6 +145,7 @@ export function RankingPage() {
                     {/* 3rd place */}
                     <div className="flex flex-col items-center w-24">
                       <Avatar className={cn("w-14 h-14 ring-2", rankIcons[2].ring)}>
+                        {ranking[2].avatar && <AvatarImage src={ranking[2].avatar} alt={ranking[2].name} />}
                         <AvatarFallback className={cn("text-sm font-bold", rankIcons[2].bg, rankIcons[2].color)}>
                           {ranking[2].initials}
                         </AvatarFallback>
@@ -178,6 +181,7 @@ export function RankingPage() {
                         {user.rank}
                       </span>
                       <Avatar className="w-9 h-9">
+                        {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
                         <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                           {user.initials}
                         </AvatarFallback>

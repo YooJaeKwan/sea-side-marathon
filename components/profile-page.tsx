@@ -71,11 +71,11 @@ export function ProfilePage() {
       </div>
 
       <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
-        <button className="w-full flex items-center gap-3 px-4 py-3.5 border-b border-border/30 text-left">
+        {/* <button className="w-full flex items-center gap-3 px-4 py-3.5 border-b border-border/30 text-left">
           <Settings className="w-4 h-4 text-muted-foreground" />
           <span className="flex-1 text-sm text-card-foreground">설정</span>
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
-        </button>
+        </button> */}
         <button onClick={() => signOut({ callbackUrl: "/login" })} className="w-full flex items-center gap-3 px-4 py-3.5 text-left cursor-pointer">
           <LogOut className="w-4 h-4 text-destructive" />
           <span className="flex-1 text-sm text-destructive">로그아웃</span>
