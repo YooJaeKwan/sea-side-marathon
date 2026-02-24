@@ -202,7 +202,7 @@ export function NewPostModal({ isOpen, onClose, onPostCreated, editData }: NewPo
                     <Zap className="w-4 h-4 text-primary fill-current" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-medium text-muted-foreground">현재 예상 페이스</p>
+                    <p className="text-[10px] font-medium text-muted-foreground">평균 페이스</p>
                     <p className="text-sm font-black text-primary tracking-tight">{livePace} <span className="text-[10px] font-bold text-primary/60">/km</span></p>
                   </div>
                 </div>
