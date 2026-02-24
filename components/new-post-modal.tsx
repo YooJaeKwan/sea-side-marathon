@@ -97,7 +97,7 @@ export function NewPostModal({ isOpen, onClose, onPostCreated, editData }: NewPo
     setSubmitting(true)
 
     try {
-      let imageUrl: string | null = null
+      let imageUrl = imagePreview
       if (imageFile) {
         imageUrl = await uploadImage(imageFile, "runs")
       }

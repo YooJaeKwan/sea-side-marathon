@@ -42,44 +42,44 @@ function timeAgo(iso: string): string {
   return `${days}일 전`
 }
 
-function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () => void; onEdit?: (post: RunningPost) => void }) {
+interface PostCardProps {
+  post: any
+  onUpdate: () => void
+  onEdit?: (post: any) => void
+}
+
+function PostCard({ post, onUpdate, onEdit }: PostCardProps) {
   const { data: session } = useSession()
-  const [liked, setLiked] = useState(post.liked)
-  const [waved, setWaved] = useState(post.waved)
-  const [likeCount, setLikeCount] = useState(post.likes)
-  const [waveCount, setWaveCount] = useState(post.waves)
+  const [counts, setCounts] = useState(post.counts)
+  const [myReactions, setMyReactions] = useState(post.myReactions)
   const [showComments, setShowComments] = useState(false)
   const [comments, setComments] = useState(post.comments)
   const [newComment, setNewComment] = useState("")
-  const [rippleId, setRippleId] = useState<string | null>(null)
+  const [rippleType, setRippleType] = useState<string | null>(null)
 
-  const handleLike = async () => {
-    const prev = liked
-    setLiked(!liked)
-    setLikeCount(liked ? likeCount - 1 : likeCount + 1)
-    setRippleId("like")
-    setTimeout(() => setRippleId(null), 600)
+  const handleReact = async (type: "HEART" | "THUMBS_UP" | "HAHA") => {
+    const isReacted = myReactions[type]
 
-    try {
-      await fetch(`/api/posts/${post.id}/like`, { method: "POST" })
-    } catch {
-      setLiked(prev)
-      setLikeCount(prev ? likeCount : likeCount - 1)
+    // Optimistic update
+    setMyReactions({ ...myReactions, [type]: !isReacted })
+    setCounts({ ...counts, [type]: isReacted ? counts[type] - 1 : counts[type] + 1 })
+
+    if (!isReacted) {
+      setRippleType(type)
+      setTimeout(() => setRippleType(null), 600)
     }
-  }
-
-  const handleWave = async () => {
-    const prev = waved
-    setWaved(!waved)
-    setWaveCount(waved ? waveCount - 1 : waveCount + 1)
-    setRippleId("wave")
-    setTimeout(() => setRippleId(null), 600)
 
     try {
-      await fetch(`/api/posts/${post.id}/wave`, { method: "POST" })
+      const res = await fetch(`/api/posts/${post.id}/react`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      })
+      if (!res.ok) throw new Error()
     } catch {
-      setWaved(prev)
-      setWaveCount(prev ? waveCount : waveCount - 1)
+      // Rollback on error
+      setMyReactions({ ...myReactions, [type]: isReacted })
+      setCounts({ ...counts, [type]: isReacted ? counts : counts[type] })
     }
   }
 
@@ -204,39 +204,55 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
       )}
 
       {/* Action bar */}
-      <div className="flex items-center border-t border-border/50 px-4 py-2.5">
+      <div className="flex items-center border-t border-border/50 px-4 py-2.5 gap-1.5">
         <button
-          onClick={handleLike}
+          onClick={() => handleReact("HEART")}
           className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-sm relative overflow-hidden",
-            liked ? "text-red-500" : "text-muted-foreground"
+            myReactions.HEART ? "bg-red-50 text-red-500" : "text-muted-foreground hover:bg-muted"
           )}
         >
-          {rippleId === "like" && (
+          {rippleType === "HEART" && (
             <span className="absolute inset-0 bg-red-500/10 rounded-full animate-ripple" />
           )}
-          <Heart className={cn("w-4 h-4 relative z-10", liked && "fill-current")} />
-          <span className="relative z-10 font-medium">{likeCount}</span>
+          <span className="relative z-10 text-base">❤️</span>
+          <span className="relative z-10 font-bold">{counts.HEART}</span>
         </button>
+
         <button
-          onClick={handleWave}
+          onClick={() => handleReact("THUMBS_UP")}
           className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-sm relative overflow-hidden",
-            waved ? "text-primary" : "text-muted-foreground"
+            myReactions.THUMBS_UP ? "bg-blue-50 text-blue-500" : "text-muted-foreground hover:bg-muted"
           )}
         >
-          {rippleId === "wave" && (
-            <span className="absolute inset-0 bg-primary/10 rounded-full animate-ripple" />
+          {rippleType === "THUMBS_UP" && (
+            <span className="absolute inset-0 bg-blue-500/10 rounded-full animate-ripple" />
           )}
-          <Waves className={cn("w-4 h-4 relative z-10", waved && "stroke-[2.5px]")} />
-          <span className="relative z-10 font-medium">{waveCount}</span>
+          <span className="relative z-10 text-base">👍</span>
+          <span className="relative z-10 font-bold">{counts.THUMBS_UP}</span>
         </button>
+
+        <button
+          onClick={() => handleReact("HAHA")}
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-sm relative overflow-hidden",
+            myReactions.HAHA ? "bg-yellow-50 text-yellow-600" : "text-muted-foreground hover:bg-muted"
+          )}
+        >
+          {rippleType === "HAHA" && (
+            <span className="absolute inset-0 bg-yellow-500/10 rounded-full animate-ripple" />
+          )}
+          <span className="relative z-10 text-base">🤣</span>
+          <span className="relative z-10 font-bold">{counts.HAHA}</span>
+        </button>
+
         <button
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-muted-foreground text-sm ml-auto"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-muted-foreground text-sm ml-auto hover:bg-muted transition-colors"
         >
           <MessageCircle className="w-4 h-4" />
-          <span className="font-medium">{comments.length}</span>
+          <span className="font-bold">{comments.length}</span>
           {comments.length > 0 && (
             showComments ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
           )}

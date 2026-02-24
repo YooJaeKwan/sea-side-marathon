@@ -3,7 +3,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { awardBadges } from "@/lib/badges"
 
-// GET /api/posts — fetch all posts with user, comments, likes, waves
+// GET /api/posts — fetch all posts with user, comments, reactions
 export async function GET() {
     const session = await auth()
     if (!session?.user?.id) {
@@ -20,41 +20,54 @@ export async function GET() {
                     user: { select: { name: true, initials: true } },
                 },
             },
-            likes: { select: { userId: true } },
-            waves: { select: { userId: true } },
-            _count: { select: { likes: true, waves: true, comments: true } },
+            reactions: true,
+            _count: { select: { comments: true } },
         },
     })
 
-    const formatted = posts.map((post) => ({
-        id: post.id,
-        user: {
-            id: post.userId,
-            name: post.user.name,
-            initials: post.user.initials || post.user.name.slice(0, 2).toUpperCase(),
-            avatar: post.user.image || "",
-            category: post.user.category || "",
-        },
-        duration: post.duration,
-        distance: post.distance,
-        pace: post.pace,
-        comment: post.content,
-        photo: post.imageUrl,
-        likes: post._count.likes,
-        waves: post._count.waves,
-        comments: post.comments.map((c) => ({
-            id: c.id,
+    const formatted = posts.map((post: any) => {
+        const reactions = post.reactions
+        const counts = {
+            HEART: reactions.filter((r: any) => r.type === "HEART").length,
+            THUMBS_UP: reactions.filter((r: any) => r.type === "THUMBS_UP").length,
+            HAHA: reactions.filter((r: any) => r.type === "HAHA").length
+        }
+
+        const myReactions = {
+            HEART: reactions.some((r: any) => r.userId === session.user!.id && r.type === "HEART"),
+            THUMBS_UP: reactions.some((r: any) => r.userId === session.user!.id && r.type === "THUMBS_UP"),
+            HAHA: reactions.some((r: any) => r.userId === session.user!.id && r.type === "HAHA")
+        }
+
+        return {
+            id: post.id,
             user: {
-                name: c.user.name,
-                initials: c.user.initials || c.user.name.slice(0, 2).toUpperCase(),
+                id: post.userId,
+                name: post.user.name,
+                initials: post.user.initials || post.user.name.slice(0, 2).toUpperCase(),
+                avatar: post.user.image || "",
+                category: post.user.category || "",
             },
-            text: c.text,
-            createdAt: c.createdAt.toISOString(),
-        })),
-        createdAt: post.createdAt.toISOString(),
-        liked: post.likes.some((l) => l.userId === session.user!.id),
-        waved: post.waves.some((w) => w.userId === session.user!.id),
-    }))
+            duration: post.duration,
+            distance: post.distance,
+            pace: post.pace,
+            comment: post.content,
+            photo: post.imageUrl,
+            counts,
+            myReactions,
+            commentCount: post._count.comments,
+            comments: post.comments.map((c: any) => ({
+                id: c.id,
+                user: {
+                    name: c.user.name,
+                    initials: c.user.initials || c.user.name.slice(0, 2).toUpperCase(),
+                },
+                text: c.text,
+                createdAt: c.createdAt.toISOString(),
+            })),
+            createdAt: post.createdAt.toISOString(),
+        }
+    })
 
     return NextResponse.json(formatted)
 }
