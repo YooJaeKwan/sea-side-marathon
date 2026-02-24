@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Heart, MessageCircle, Waves, Clock, MapPin, ChevronDown, ChevronUp, Send, Trash2 } from "lucide-react"
+import { Heart, MessageCircle, Waves, Clock, MapPin, ChevronDown, ChevronUp, Send, Trash2, Pencil } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
@@ -42,7 +42,7 @@ function timeAgo(iso: string): string {
   return `${days}일 전`
 }
 
-function PostCard({ post, onUpdate }: { post: RunningPost; onUpdate: () => void }) {
+function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () => void; onEdit?: (post: RunningPost) => void }) {
   const { data: session } = useSession()
   const [liked, setLiked] = useState(post.liked)
   const [waved, setWaved] = useState(post.waved)
@@ -152,9 +152,14 @@ function PostCard({ post, onUpdate }: { post: RunningPost; onUpdate: () => void 
           <p className="text-xs text-muted-foreground">{timeAgo(post.createdAt)}</p>
         </div>
         {session?.user?.id === post.user.id && (
-          <button onClick={handleDeletePost} className="p-2 text-muted-foreground/40 hover:text-red-500 transition-colors">
-            <Trash2 className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => onEdit?.(post)} className="p-2 text-muted-foreground/40 hover:text-primary transition-colors">
+              <Pencil className="w-4 h-4" />
+            </button>
+            <button onClick={handleDeletePost} className="p-2 text-muted-foreground/40 hover:text-red-500 transition-colors">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         )}
       </div>
 
@@ -185,17 +190,17 @@ function PostCard({ post, onUpdate }: { post: RunningPost; onUpdate: () => void 
         </div>
       </div>
 
-      {/* Comment text */}
-      {post.comment && (
-        <p className="px-4 pb-3 text-sm leading-relaxed text-card-foreground">{post.comment}</p>
-      )}
-
-      {/* Photo */}
+      {/* Photo (Now before comment) */}
       {post.photo && (
         <div className="px-4 pb-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={post.photo} alt="러닝 사진" className="w-full rounded-xl object-cover max-h-64" />
         </div>
+      )}
+
+      {/* Comment text (Now after photo) */}
+      {post.comment && (
+        <p className="px-4 pb-3 text-sm leading-relaxed text-card-foreground">{post.comment}</p>
       )}
 
       {/* Action bar */}
@@ -296,10 +301,12 @@ export function FeedPage({
   posts,
   loading,
   onRefresh,
+  onEdit,
 }: {
   posts: RunningPost[]
   loading: boolean
   onRefresh: () => void
+  onEdit?: (post: RunningPost) => void
 }) {
   if (loading) {
     return (
@@ -321,7 +328,7 @@ export function FeedPage({
         </div>
       ) : (
         posts.map((post) => (
-          <PostCard key={post.id} post={post} onUpdate={onRefresh} />
+          <PostCard key={post.id} post={post} onUpdate={onRefresh} onEdit={onEdit} />
         ))
       )}
     </div>

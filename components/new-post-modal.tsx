@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { X, Camera, Clock, MapPin, MessageSquare, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { uploadImage } from "@/lib/supabase"
@@ -9,18 +9,42 @@ interface NewPostModalProps {
   isOpen: boolean
   onClose: () => void
   onPostCreated?: (newBadges?: any[]) => void
+  editData?: {
+    id: string
+    duration: string
+    distance: number
+    content: string | null
+    imageUrl: string | null
+  }
 }
 
-export function NewPostModal({ isOpen, onClose, onPostCreated }: NewPostModalProps) {
-  const [hours, setHours] = useState("")
-  const [minutes, setMinutes] = useState("")
-  const [distance, setDistance] = useState("")
-  const [comment, setComment] = useState("")
+export function NewPostModal({ isOpen, onClose, onPostCreated, editData }: NewPostModalProps) {
+  const isEdit = !!editData
+  const [hours, setHours] = useState(editData?.duration?.split(":")[0] || "")
+  const [minutes, setMinutes] = useState(editData?.duration?.split(":")[1] || "")
+  const [distance, setDistance] = useState(editData?.distance?.toString() || "")
+  const [comment, setComment] = useState(editData?.content || "")
   const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(editData?.imageUrl || null)
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Reset state when editData changes or modal closes/opens
+  useEffect(() => {
+    if (isOpen) {
+      if (editData) {
+        setHours(editData.duration.split(":")[0])
+        setMinutes(editData.duration.split(":")[1])
+        setDistance(editData.distance.toString())
+        setComment(editData.content || "")
+        setImagePreview(editData.imageUrl || null)
+      } else {
+        setHours(""); setMinutes(""); setDistance(""); setComment(""); setImagePreview(null)
+      }
+      setImageFile(null)
+    }
+  }, [isOpen, editData])
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -51,8 +75,8 @@ export function NewPostModal({ isOpen, onClose, onPostCreated }: NewPostModalPro
         pace = `${Math.floor(p)}'${String(Math.round((p % 1) * 60)).padStart(2, "0")}"`
       }
 
-      const res = await fetch("/api/posts", {
-        method: "POST",
+      const res = await fetch(isEdit ? `/api/posts/${editData.id}` : "/api/posts", {
+        method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ duration, distance: dist, pace, content: comment || null, imageUrl }),
       })
@@ -62,9 +86,12 @@ export function NewPostModal({ isOpen, onClose, onPostCreated }: NewPostModalPro
         setSubmitted(true)
         setTimeout(() => {
           setSubmitted(false)
-          setHours(""); setMinutes(""); setDistance(""); setComment("")
-          setImageFile(null); setImagePreview(null)
+          if (!isEdit) {
+            setHours(""); setMinutes(""); setDistance(""); setComment("")
+            setImageFile(null); setImagePreview(null)
+          }
           onPostCreated?.(data.newBadges)
+          onClose()
         }, 1500)
       }
     } catch {
@@ -83,7 +110,7 @@ export function NewPostModal({ isOpen, onClose, onPostCreated }: NewPostModalPro
         <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-border" /></div>
         <div className="flex items-center justify-between px-5 pb-4">
           <button onClick={onClose} className="text-muted-foreground p-1" aria-label="닫기"><X className="w-5 h-5" /></button>
-          <h2 className="text-base font-bold text-card-foreground">러닝 인증</h2>
+          <h2 className="text-base font-bold text-card-foreground">{isEdit ? "기록 수정" : "러닝 인증"}</h2>
           <div className="w-7" />
         </div>
 
@@ -92,8 +119,8 @@ export function NewPostModal({ isOpen, onClose, onPostCreated }: NewPostModalPro
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center animate-in zoom-in duration-300">
               <Check className="w-8 h-8 text-primary" />
             </div>
-            <p className="text-base font-semibold text-card-foreground">인증 완료!</p>
-            <p className="text-sm text-muted-foreground">오늘도 수고했어요</p>
+            <p className="text-base font-semibold text-card-foreground">{isEdit ? "수정 완료!" : "인증 완료!"}</p>
+            <p className="text-sm text-muted-foreground">{isEdit ? "기록이 업데이트되었습니다" : "오늘도 수고했어요"}</p>
           </div>
         ) : (
           <div className="px-5 pb-8 space-y-5">
@@ -150,7 +177,7 @@ export function NewPostModal({ isOpen, onClose, onPostCreated }: NewPostModalPro
             </div>
 
             <button onClick={handleSubmit} disabled={!minutes || !distance || submitting} className={cn("w-full h-13 rounded-2xl text-base font-bold transition-all active:scale-[0.98]", minutes && distance && !submitting ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" : "bg-muted text-muted-foreground cursor-not-allowed")}>
-              {submitting ? <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "인증하기"}
+              {submitting ? <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (isEdit ? "수정하기" : "인증하기")}
             </button>
           </div>
         )}

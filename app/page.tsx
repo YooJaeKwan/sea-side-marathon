@@ -28,6 +28,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [dday, setDday] = useState(0)
   const [newBadges, setNewBadges] = useState<any[]>([])
+  const [editingPost, setEditingPost] = useState<any | null>(null)
 
   useEffect(() => {
     const target = new Date("2026-05-16T00:00:00+09:00")
@@ -70,9 +71,25 @@ export default function Home() {
 
   const handlePostCreated = (earnedBadges?: any[]) => {
     setShowNewPost(false)
+    setEditingPost(null)
     fetchPosts()
     if (earnedBadges && earnedBadges.length > 0) {
       setNewBadges(earnedBadges)
+    }
+  }
+
+  const renderPage = () => {
+    switch (activeTab) {
+      case "feed":
+        return <FeedPage posts={posts} loading={loading} onRefresh={fetchPosts} onEdit={(post) => setEditingPost(post)} />
+      case "calendar":
+        return <CalendarPage />
+      case "ranking":
+        return <RankingPage />
+      case "profile":
+        return <ProfilePage />
+      default:
+        return null
     }
   }
 
@@ -106,10 +123,7 @@ export default function Home() {
 
       {/* Main content */}
       <main className="px-4 pt-4 pb-28">
-        {activeTab === "feed" && <FeedPage posts={posts} loading={loading} onRefresh={fetchPosts} />}
-        {activeTab === "calendar" && <CalendarPage />}
-        {activeTab === "ranking" && <RankingPage />}
-        {activeTab === "profile" && <ProfilePage />}
+        {renderPage()}
       </main>
 
       {/* Bottom Navigation */}
@@ -119,8 +133,19 @@ export default function Home() {
         onNewPost={() => setShowNewPost(true)}
       />
 
-      {/* New Post Modal */}
-      <NewPostModal isOpen={showNewPost} onClose={() => setShowNewPost(false)} onPostCreated={handlePostCreated} />
+      {/* New/Edit Post Modal */}
+      <NewPostModal
+        isOpen={showNewPost || !!editingPost}
+        onClose={() => { setShowNewPost(false); setEditingPost(null) }}
+        onPostCreated={handlePostCreated}
+        editData={editingPost ? {
+          id: editingPost.id,
+          duration: editingPost.duration,
+          distance: editingPost.distance,
+          content: editingPost.comment,
+          imageUrl: editingPost.photo
+        } : undefined}
+      />
 
       {/* Badge Award Popup */}
       {newBadges.length > 0 && (
