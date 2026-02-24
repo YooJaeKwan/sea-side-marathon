@@ -110,7 +110,7 @@ export default function LoginPage() {
                     </h1>
                     <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
                         <MapPin className="w-3.5 h-3.5" />
-                        <span>영종도 Sea Side Marathon</span>
+                        <span>영종도</span>
                     </div>
                 </div>
 
