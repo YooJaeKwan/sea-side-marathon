@@ -8,7 +8,7 @@ import { uploadImage } from "@/lib/supabase"
 interface NewPostModalProps {
   isOpen: boolean
   onClose: () => void
-  onPostCreated?: () => void
+  onPostCreated?: (newBadges?: any[]) => void
 }
 
 export function NewPostModal({ isOpen, onClose, onPostCreated }: NewPostModalProps) {
@@ -58,12 +58,13 @@ export function NewPostModal({ isOpen, onClose, onPostCreated }: NewPostModalPro
       })
 
       if (res.ok) {
+        const data = await res.json()
         setSubmitted(true)
         setTimeout(() => {
           setSubmitted(false)
           setHours(""); setMinutes(""); setDistance(""); setComment("")
           setImageFile(null); setImagePreview(null)
-          onPostCreated?.()
+          onPostCreated?.(data.newBadges)
         }, 1500)
       }
     } catch {

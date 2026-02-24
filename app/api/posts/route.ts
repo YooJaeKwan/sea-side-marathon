@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { awardBadges } from "@/lib/badges"
 
 // GET /api/posts — fetch all posts with user, comments, likes, waves
 export async function GET() {
@@ -83,5 +84,8 @@ export async function POST(req: Request) {
         },
     })
 
-    return NextResponse.json(post, { status: 201 })
+    // Award badges and get newly earned ones
+    const newBadges = await awardBadges(session.user.id)
+
+    return NextResponse.json({ ...post, newBadges }, { status: 201 })
 }

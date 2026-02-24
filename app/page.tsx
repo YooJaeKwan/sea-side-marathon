@@ -9,6 +9,7 @@ import { CalendarPage } from "@/components/calendar-page"
 import { RankingPage } from "@/components/ranking-page"
 import { ProfilePage } from "@/components/profile-page"
 import { NewPostModal } from "@/components/new-post-modal"
+import { BadgeAwardPopup } from "@/components/badge-award-popup"
 
 const TAB_TITLES: Record<string, string> = {
   feed: "피드",
@@ -26,6 +27,7 @@ export default function Home() {
   const [posts, setPosts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [dday, setDday] = useState(0)
+  const [newBadges, setNewBadges] = useState<any[]>([])
 
   useEffect(() => {
     const target = new Date("2026-05-16T00:00:00+09:00")
@@ -66,9 +68,12 @@ export default function Home() {
     }
   }, [status, fetchPosts])
 
-  const handlePostCreated = () => {
+  const handlePostCreated = (earnedBadges?: any[]) => {
     setShowNewPost(false)
     fetchPosts()
+    if (earnedBadges && earnedBadges.length > 0) {
+      setNewBadges(earnedBadges)
+    }
   }
 
   if (status === "loading") {
@@ -116,6 +121,11 @@ export default function Home() {
 
       {/* New Post Modal */}
       <NewPostModal isOpen={showNewPost} onClose={() => setShowNewPost(false)} onPostCreated={handlePostCreated} />
+
+      {/* Badge Award Popup */}
+      {newBadges.length > 0 && (
+        <BadgeAwardPopup badges={newBadges} onClose={() => setNewBadges([])} />
+      )}
     </div>
   )
 }
