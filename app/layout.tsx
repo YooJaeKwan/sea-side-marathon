@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Noto_Sans_KR } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { Providers } from '@/components/providers'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
@@ -9,7 +10,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono
 const _notoSansKR = Noto_Sans_KR({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-noto-sans-kr" });
 
 export const metadata: Metadata = {
-  title: 'Sea Side Pacer',
+  title: 'Sea Side Marathon 크루',
   description: 'Sea Side Marathon 크루를 위한 소셜 러닝 트래커',
   icons: {
     icon: [
@@ -46,9 +47,12 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={`${_notoSansKR.variable} ${_geist.variable} ${_geistMono.variable} font-sans antialiased`}>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
         <Analytics />
       </body>
     </html>
   )
 }
+

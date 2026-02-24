@@ -1,9 +1,8 @@
 "use client"
 
 import { ChevronLeft, ChevronRight, Flame, Timer, MapPin, TrendingUp } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { cn } from "@/lib/utils"
-import { mockRunDates, mockMyStats } from "@/lib/mock-data"
 
 const DAYS_KR = ["일", "월", "화", "수", "목", "금", "토"]
 const MONTHS_KR = [
@@ -46,18 +45,66 @@ function StatCard({
   )
 }
 
+interface MyStats {
+  totalKm: number
+  totalTime: string
+  avgPace: string
+  totalRuns: number
+  streakDays: number
+}
+
 export function CalendarPage() {
-  const [currentMonth, setCurrentMonth] = useState(1) // Feb (0-indexed)
-  const [currentYear] = useState(2026)
+  const now = new Date()
+  const [currentMonth, setCurrentMonth] = useState(now.getMonth())
+  const [currentYear, setCurrentYear] = useState(now.getFullYear())
+  const [runDates, setRunDates] = useState<number[]>([])
+  const [stats, setStats] = useState<MyStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [calRes, meRes] = await Promise.all([
+        fetch(`/api/me/calendar?year=${currentYear}&month=${currentMonth + 1}`),
+        fetch("/api/me"),
+      ])
+      if (calRes.ok) {
+        const calData = await calRes.json()
+        setRunDates(calData.runDates)
+      }
+      if (meRes.ok) {
+        const meData = await meRes.json()
+        setStats(meData.stats)
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false)
+    }
+  }, [currentYear, currentMonth])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth)
 
   const prevMonth = () => {
-    setCurrentMonth((prev) => (prev === 0 ? 11 : prev - 1))
+    if (currentMonth === 0) {
+      setCurrentMonth(11)
+      setCurrentYear(currentYear - 1)
+    } else {
+      setCurrentMonth(currentMonth - 1)
+    }
   }
   const nextMonth = () => {
-    setCurrentMonth((prev) => (prev === 11 ? 0 : prev + 1))
+    if (currentMonth === 11) {
+      setCurrentMonth(0)
+      setCurrentYear(currentYear + 1)
+    } else {
+      setCurrentMonth(currentMonth + 1)
+    }
   }
 
   const blanks = Array.from({ length: firstDay }, (_, i) => i)
@@ -69,16 +116,16 @@ export function CalendarPage() {
     today.getMonth() === currentMonth &&
     today.getDate() === day
 
-  const isRunDay = (day: number) => mockRunDates.includes(day)
+  const isRunDay = (day: number) => runDates.includes(day)
 
   return (
     <div className="space-y-4">
       {/* Stats summary */}
       <div className="grid grid-cols-2 gap-3">
-        <StatCard icon={MapPin} label="누적 거리" value={mockMyStats.totalKm} unit="km" color="text-accent" />
-        <StatCard icon={Timer} label="누적 시간" value="14:35" unit="시간" color="text-primary" />
-        <StatCard icon={TrendingUp} label="평균 페이스" value={mockMyStats.avgPace} unit="/km" color="text-card-foreground" />
-        <StatCard icon={Flame} label="연속 인증" value={mockMyStats.streakDays} unit="일째" color="text-accent" />
+        <StatCard icon={MapPin} label="누적 거리" value={stats?.totalKm ?? "-"} unit="km" color="text-accent" />
+        <StatCard icon={Timer} label="누적 시간" value={stats?.totalTime ?? "-"} unit="시간" color="text-primary" />
+        <StatCard icon={TrendingUp} label="평균 페이스" value={stats?.avgPace ?? "-"} unit="/km" color="text-card-foreground" />
+        <StatCard icon={Flame} label="연속 인증" value={stats?.streakDays ?? 0} unit="일째" color="text-accent" />
       </div>
 
       {/* Calendar */}
@@ -131,41 +178,22 @@ export function CalendarPage() {
           })}
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-border/50">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-primary" />
-            <span className="text-[10px] text-muted-foreground">인증 완료</span>
+        {/* Legend + 인증 현황 */}
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-primary" />
+              <span className="text-[10px] text-muted-foreground">인증 완료</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full ring-2 ring-primary/40" />
+              <span className="text-[10px] text-muted-foreground">오늘</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full ring-2 ring-primary/40" />
-            <span className="text-[10px] text-muted-foreground">오늘</span>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            <span className="font-bold text-primary">{runDates.length}</span>일 / {daysInMonth}일
+          </p>
         </div>
-      </div>
-
-      {/* Streak visualization */}
-      <div className="bg-card rounded-2xl border border-border/50 p-4">
-        <h4 className="text-sm font-bold text-card-foreground mb-3">2월 인증 현황</h4>
-        <div className="flex gap-1 flex-wrap">
-          {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
-            <div
-              key={day}
-              className={cn(
-                "w-[calc((100%-6*4px)/7)] aspect-square rounded-sm transition-all",
-                isRunDay(day)
-                  ? "bg-primary/80"
-                  : day <= 24
-                    ? "bg-muted"
-                    : "bg-muted/40"
-              )}
-              title={`2월 ${day}일`}
-            />
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground mt-3">
-          이번 달 <span className="font-bold text-primary">{mockRunDates.length}</span>일 인증 / 28일 중
-        </p>
       </div>
     </div>
   )

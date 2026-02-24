@@ -1,0 +1,126 @@
+import { NextResponse } from "next/server"
+import { auth } from "@/auth"
+import { prisma } from "@/lib/prisma"
+
+// GET /api/badges — all badges + user's earned ones (+ auto-award logic)
+export async function GET() {
+    const session = await auth()
+    if (!session?.user?.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const userId = session.user.id
+
+    // 1. Fetch user data for badge calculation
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+            posts: {
+                include: {
+                    _count: { select: { likes: true, waves: true } },
+                }
+            },
+            comments: true,
+            likes: true, // likes given
+            waves: true, // waves given
+        }
+    })
+
+    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
+
+    // 2. Fetch all available badges
+    const allBadges = await prisma.badge.findMany()
+
+    // 3. Simple stats
+    const totalKm = user.posts.reduce((sum, p) => sum + p.distance, 0)
+    const totalLikesReceived = user.posts.reduce((sum, p) => sum + p._count.likes, 0)
+    const totalWavesReceived = user.posts.reduce((sum, p) => sum + p._count.waves, 0)
+    const times = user.posts.map(p => new Date(p.createdAt).getHours())
+
+    // 4. Calculate which badges should be awarded
+    const earnedBadgeNames: string[] = []
+
+    if (user.posts.length >= 1) earnedBadgeNames.push("시작이 반")
+    if (totalKm >= 50) earnedBadgeNames.push("영종도 앰배서더")
+    if (totalKm >= 100) earnedBadgeNames.push("울트라 러너")
+    if (totalKm >= 200) earnedBadgeNames.push("지구 한 바퀴 꿈나무")
+    if (times.some(h => h < 6)) earnedBadgeNames.push("새벽 공기 수집가")
+    if (times.some(h => h >= 22)) earnedBadgeNames.push("심야의 질주")
+    if (totalWavesReceived >= 10) earnedBadgeNames.push("베스트 메이트")
+    if (totalLikesReceived >= 30) earnedBadgeNames.push("인기쟁이")
+    if (user.comments.length >= 20) earnedBadgeNames.push("마당발")
+    if (user.posts.some(p => p.content?.includes("비"))) earnedBadgeNames.push("폭우를 뚫고")
+
+    // Streak Calculation
+    let streakDays = 0
+    if (user.posts.length > 0) {
+        const todayAtMidnight = new Date()
+        todayAtMidnight.setHours(0, 0, 0, 0)
+        const postDates = [...new Set(user.posts.map((p) => {
+            const d = new Date(p.createdAt)
+            d.setHours(0, 0, 0, 0)
+            return d.getTime()
+        }))].sort((a, b) => b - a)
+
+        const diffMs = todayAtMidnight.getTime() - postDates[0]
+        const diffDays = diffMs / (1000 * 60 * 60 * 24)
+        if (diffDays <= 1) {
+            streakDays = 1
+            for (let i = 1; i < postDates.length; i++) {
+                const gap = (postDates[i - 1] - postDates[i]) / (1000 * 60 * 60 * 24)
+                if (gap === 1) streakDays++
+                else break
+            }
+        }
+    }
+
+    if (streakDays >= 3) earnedBadgeNames.push("꾸준함의 상징")
+    if (streakDays >= 7) earnedBadgeNames.push("러닝 머신")
+    if (streakDays >= 28) earnedBadgeNames.push("철인 28호")
+
+    // Check if first post of the day (globally)
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const firstPostToday = await prisma.post.findFirst({
+        where: { createdAt: { gte: todayStart } },
+        orderBy: { createdAt: "asc" },
+        select: { userId: true }
+    })
+    if (firstPostToday?.userId === userId) earnedBadgeNames.push("오늘의 주인공")
+
+    if (user.category === "10km" && user.posts.length >= 5) earnedBadgeNames.push("해안도로 수호자")
+    if (user.category === "5km" && user.posts.length >= 10) earnedBadgeNames.push("하프 마스터")
+    if (user.category === "Tea" && user.comments.length >= 10) earnedBadgeNames.push("티 타임 리더")
+
+    // Social: Liked or Waved 5+ unique posts (simplification for 페이스 메이커)
+    if (user.likes.length + user.waves.length >= 5) earnedBadgeNames.push("페이스 메이커")
+
+    // 5. Save newly earned badges
+    const toAward = allBadges.filter(b => earnedBadgeNames.includes(b.name))
+    for (const badge of toAward) {
+        await prisma.userBadge.upsert({
+            where: { userId_badgeId: { userId, badgeId: badge.id } },
+            update: {},
+            create: { userId, badgeId: badge.id }
+        })
+    }
+
+    // 6. Return all badges with earned status
+    const userBadges = await prisma.userBadge.findMany({
+        where: { userId },
+        select: { badgeId: true, earnedAt: true }
+    })
+
+    const earnedMap = new Map(userBadges.map(ub => [ub.badgeId, ub.earnedAt]))
+
+    const formatted = allBadges.map((badge) => ({
+        id: badge.id,
+        name: badge.name,
+        description: badge.description,
+        icon: badge.icon,
+        earned: earnedMap.has(badge.id),
+        earnedDate: earnedMap.get(badge.id)?.toISOString() || null,
+    }))
+
+    return NextResponse.json(formatted)
+}
