@@ -4,6 +4,7 @@ import { Crown, Medal, Award, Waves } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 
 const rankIcons = [
   { icon: Crown, color: "text-yellow-500", bg: "bg-yellow-50", ring: "ring-yellow-300" },
@@ -29,40 +30,38 @@ interface BadgeData {
   earnedDate: string | null
 }
 
-const badgeIcons: Record<string, { emoji: string; color: string }> = {
-  "wave-first": { emoji: "~", color: "bg-primary/15 text-primary" },
-  "wave-streak": { emoji: "~", color: "bg-primary/15 text-primary" },
-  "turtle": { emoji: "T", color: "bg-green-100 text-green-700" },
-  "dolphin": { emoji: "D", color: "bg-blue-100 text-blue-700" },
-  "current": { emoji: "C", color: "bg-cyan-100 text-cyan-700" },
-  "shell": { emoji: "S", color: "bg-amber-100 text-amber-700" },
-}
-
 export function RankingPage() {
+  const { data: session, status } = useSession()
   const [activeTab, setActiveTab] = useState<"ranking" | "badges">("ranking")
   const [ranking, setRanking] = useState<RankingUser[]>([])
   const [badges, setBadges] = useState<BadgeData[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
+      if (status !== "authenticated") return
+
       setLoading(true)
+      setError(false)
       try {
         if (activeTab === "ranking") {
           const res = await fetch("/api/ranking")
           if (res.ok) setRanking(await res.json())
+          else setError(true)
         } else {
           const res = await fetch("/api/badges")
           if (res.ok) setBadges(await res.json())
+          else setError(true)
         }
       } catch {
-        // ignore
+        setError(true)
       } finally {
         setLoading(false)
       }
     }
     fetchData()
-  }, [activeTab])
+  }, [activeTab, status])
 
   return (
     <div className="space-y-4">
@@ -92,9 +91,14 @@ export function RankingPage() {
         </button>
       </div>
 
-      {loading ? (
+      {loading || status === "loading" ? (
         <div className="flex justify-center py-12">
           <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
+      ) : error ? (
+        <div className="bg-card rounded-2xl border border-border/50 p-8 text-center text-muted-foreground">
+          <p className="text-sm">데이터를 불러오지 못했습니다.</p>
+          <button onClick={() => window.location.reload()} className="mt-2 text-xs text-primary font-bold">다시 시도</button>
         </div>
       ) : activeTab === "ranking" ? (
         <>

@@ -10,7 +10,7 @@ async function main() {
     const allBadges = await prisma.badge.findMany()
     console.log(`Found ${allBadges.length} badges.`)
     if (allBadges.length > 0) {
-        console.log("First 3 badges:", allBadges.slice(0, 3).map(b => b.name))
+        console.log("First 3 badges with icons:", allBadges.slice(0, 3).map(b => `${b.name} (${b.icon})`))
     }
 
     console.log("Checking userBadge table...")
