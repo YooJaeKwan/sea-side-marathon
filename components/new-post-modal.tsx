@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { X, Camera, Clock, MapPin, MessageSquare, Check } from "lucide-react"
+import { X, Camera, Clock, MapPin, MessageSquare, Check, Plus, Minus, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { uploadImage } from "@/lib/supabase"
 
@@ -28,7 +28,25 @@ export function NewPostModal({ isOpen, onClose, onPostCreated, editData }: NewPo
   const [imagePreview, setImagePreview] = useState<string | null>(editData?.imageUrl || null)
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [livePace, setLivePace] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Calculate live pace
+  useEffect(() => {
+    const h = parseInt(hours || "0")
+    const m = parseInt(minutes || "0")
+    const d = parseFloat(distance || "0")
+    const totalMin = h * 60 + m
+
+    if (d > 0 && totalMin > 0) {
+      const p = totalMin / d
+      const min = Math.floor(p)
+      const sec = Math.round((p % 1) * 60)
+      setLivePace(`${min}'${String(sec).padStart(2, "0")}"`)
+    } else {
+      setLivePace(null)
+    }
+  }, [hours, minutes, distance])
 
   // Reset state when editData changes or modal closes/opens
   useEffect(() => {
@@ -45,6 +63,26 @@ export function NewPostModal({ isOpen, onClose, onPostCreated, editData }: NewPo
       setImageFile(null)
     }
   }, [isOpen, editData])
+
+  const adjustMinutes = (amount: number) => {
+    let m = parseInt(minutes || "0") + amount
+    let h = parseInt(hours || "0")
+
+    if (m < 0) {
+      if (h > 0) {
+        h -= 1
+        m += 60
+      } else {
+        m = 0
+      }
+    } else if (m >= 60) {
+      h += Math.floor(m / 60)
+      m = m % 60
+    }
+
+    setHours(h > 0 ? h.toString() : "")
+    setMinutes(m.toString())
+  }
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -125,18 +163,24 @@ export function NewPostModal({ isOpen, onClose, onPostCreated, editData }: NewPo
         ) : (
           <div className="px-5 pb-8 space-y-5">
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold text-card-foreground mb-2">
-                <Clock className="w-4 h-4 text-primary" /> 뛴 시간 <span className="text-destructive">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-card-foreground">
+                  <Clock className="w-4 h-4 text-primary" /> 뛴 시간 <span className="text-destructive">*</span>
+                </label>
+                <div className="flex gap-1.5">
+                  <button onClick={() => adjustMinutes(-5)} className="px-2 py-1 bg-muted rounded-lg text-[10px] font-bold text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors active:scale-95 flex items-center gap-0.5"><Minus className="w-2 h-2" />5분</button>
+                  <button onClick={() => adjustMinutes(5)} className="px-2 py-1 bg-muted rounded-lg text-[10px] font-bold text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors active:scale-95 flex items-center gap-0.5"><Plus className="w-2 h-2" />5분</button>
+                </div>
+              </div>
               <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <input type="number" value={hours} onChange={(e) => setHours(e.target.value)} placeholder="00" maxLength={2} className="w-full h-12 bg-muted rounded-xl px-4 text-center text-lg font-bold text-card-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">시간</span>
+                <div className="relative flex-1 group">
+                  <input type="number" value={hours} onChange={(e) => setHours(e.target.value)} placeholder="00" maxLength={2} className="w-full h-12 bg-muted rounded-xl px-4 text-center text-lg font-bold text-card-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 group-hover:bg-muted/80 transition-all" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">HRS</span>
                 </div>
                 <span className="text-lg font-bold text-muted-foreground">:</span>
-                <div className="relative flex-1">
-                  <input type="number" value={minutes} onChange={(e) => setMinutes(e.target.value)} placeholder="00" maxLength={2} className="w-full h-12 bg-muted rounded-xl px-4 text-center text-lg font-bold text-card-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">분</span>
+                <div className="relative flex-1 group">
+                  <input type="number" value={minutes} onChange={(e) => setMinutes(e.target.value)} placeholder="00" maxLength={2} className="w-full h-12 bg-muted rounded-xl px-4 text-center text-lg font-bold text-card-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 group-hover:bg-muted/80 transition-all" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">MIN</span>
                 </div>
               </div>
             </div>
@@ -145,15 +189,29 @@ export function NewPostModal({ isOpen, onClose, onPostCreated, editData }: NewPo
               <label className="flex items-center gap-2 text-sm font-semibold text-card-foreground mb-2">
                 <MapPin className="w-4 h-4 text-accent" /> 거리 <span className="text-destructive">*</span>
               </label>
-              <div className="relative">
-                <input type="number" step="0.1" value={distance} onChange={(e) => setDistance(e.target.value)} placeholder="0.0" className="w-full h-12 bg-muted rounded-xl px-4 text-center text-lg font-bold text-card-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">km</span>
+              <div className="relative group">
+                <input type="number" step="0.1" value={distance} onChange={(e) => setDistance(e.target.value)} placeholder="0.0" className="w-full h-12 bg-muted rounded-xl px-4 text-center text-lg font-bold text-card-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 group-hover:bg-muted/80 transition-all" />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">km</span>
               </div>
             </div>
 
+            {livePace && (
+              <div className="bg-primary/5 rounded-2xl p-4 flex items-center justify-between animate-in zoom-in-95 duration-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-primary fill-current" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground">현재 예상 페이스</p>
+                    <p className="text-sm font-black text-primary tracking-tight">{livePace} <span className="text-[10px] font-bold text-primary/60">/km</span></p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-card-foreground mb-2">
-                <Camera className="w-4 h-4 text-muted-foreground" /> 사진 (선택)
+                <Camera className="w-4 h-4 text-muted-foreground" /> 사진 <span className="text-[10px] font-normal text-muted-foreground/60 ml-auto pt-0.5">선택사항</span>
               </label>
               <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageSelect} className="hidden" />
               {imagePreview ? (
@@ -171,7 +229,7 @@ export function NewPostModal({ isOpen, onClose, onPostCreated, editData }: NewPo
 
             <div>
               <label className="flex items-center gap-2 text-sm font-semibold text-card-foreground mb-2">
-                <MessageSquare className="w-4 h-4 text-muted-foreground" /> 한 마디 (선택)
+                <MessageSquare className="w-4 h-4 text-muted-foreground" /> 한 마디 <span className="text-[10px] font-normal text-muted-foreground/60 ml-auto pt-0.5">선택사항</span>
               </label>
               <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="오늘 러닝은 어땠나요?" rows={2} className="w-full bg-muted rounded-xl px-4 py-3 text-sm text-card-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
             </div>
