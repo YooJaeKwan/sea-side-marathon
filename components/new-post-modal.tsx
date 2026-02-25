@@ -131,9 +131,13 @@ export function NewPostModal({ isOpen, onClose, onPostCreated, editData }: NewPo
           onPostCreated?.(data.newBadges)
           onClose()
         }, 1500)
+      } else {
+        const errData = await res.json().catch(() => ({}))
+        alert(`저장에 실패했습니다: ${errData.error || res.statusText}`)
       }
-    } catch {
-      // ignore
+    } catch (err: any) {
+      console.error("Submission error:", err)
+      alert(`오류가 발생했습니다: ${err.message}`)
     } finally {
       setSubmitting(false)
     }

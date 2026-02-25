@@ -3,6 +3,8 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { awardBadges } from "@/lib/badges"
 
+export const dynamic = "force-dynamic"
+
 // GET /api/posts — fetch all posts with user, comments, likes
 export async function GET() {
     const session = await auth()
@@ -81,8 +83,17 @@ export async function POST(req: Request) {
         },
     })
 
+    console.log(`[API] Post created: ${post.id}`)
+
     // Award badges and get newly earned ones
-    const newBadges = await awardBadges(session.user.id)
+    let newBadges: any[] = []
+    try {
+        newBadges = await awardBadges(session.user.id)
+        console.log(`[API] Badges awarded: ${newBadges.length}`)
+    } catch (err) {
+        console.error("[API] Error awarding badges:", err)
+        // We still return the post even if badges fail
+    }
 
     return NextResponse.json({ ...post, newBadges }, { status: 201 })
 }

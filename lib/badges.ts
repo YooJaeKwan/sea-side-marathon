@@ -9,21 +9,32 @@ export interface EarnedBadge {
 }
 
 export async function awardBadges(userId: string): Promise<EarnedBadge[]> {
+    console.log(`[Badges] Awarding badges for user: ${userId}`)
+
     // 1. Fetch user data for badge calculation
+    // We strictly query only what's currently in schema.prisma (No Waves)
     const user = await prisma.user.findUnique({
         where: { id: userId },
         include: {
             posts: {
                 include: {
-                    _count: { select: { likes: true } },
+                    _count: {
+                        select: {
+                            likes: true,
+                            comments: true
+                        }
+                    },
                 }
             },
             comments: true,
-            likes: true, // likes given
+            likes: true,
         }
     })
 
-    if (!user) return []
+    if (!user) {
+        console.warn(`[Badges] User not found: ${userId}`)
+        return []
+    }
 
     // 2. Fetch all available badges
     const allBadges = await prisma.badge.findMany()
@@ -113,5 +124,6 @@ export async function awardBadges(userId: string): Promise<EarnedBadge[]> {
         })
     }
 
+    console.log(`[Badges] Finished awarding badges. New: ${newlyEarnedBadges.length}`)
     return newlyEarnedBadges
 }

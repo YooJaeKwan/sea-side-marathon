@@ -49,6 +49,13 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
   const [newComment, setNewComment] = useState("")
   const [rippleId, setRippleId] = useState<string | null>(null)
 
+  // Sync state with props when data is refreshed
+  useEffect(() => {
+    setLiked(post.liked)
+    setLikeCount(post.likes)
+    setComments(post.comments)
+  }, [post])
+
   const handleLike = async () => {
     const prev = liked
     setLiked(!liked)
