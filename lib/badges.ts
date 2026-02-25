@@ -174,8 +174,7 @@ export async function awardBadges(userId: string): Promise<EarnedBadge[]> {
 
     for (const badge of toAward) {
         const created = await prisma.userBadge.create({
-            data: { userId, badgeId: badge.id },
-            include: { badge: true }
+            data: { userId, badgeId: badge.id }
         })
         newlyEarnedBadges.push({
             id: badge.id,

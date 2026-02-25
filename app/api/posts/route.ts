@@ -65,6 +65,16 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // Verify user actually exists in the database (prevents FK violation P2003)
+    const userExists = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true }
+    })
+
+    if (!userExists) {
+        return NextResponse.json({ error: "Authenticated user not found in database. Please sign in again." }, { status: 401 })
+    }
+
     const body = await req.json()
     const { duration, distance, pace, content, imageUrl } = body
 
