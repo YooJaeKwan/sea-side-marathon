@@ -64,7 +64,10 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
     setTimeout(() => setRippleId(null), 600)
 
     try {
-      await fetch(`/api/posts/${post.id}/like`, { method: "POST" })
+      const res = await fetch(`/api/posts/${post.id}/like`, { method: "POST" })
+      if (res.ok) {
+        onUpdate()
+      }
     } catch {
       setLiked(prev)
       setLikeCount(prev ? likeCount : likeCount - 1)

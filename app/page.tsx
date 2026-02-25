@@ -67,7 +67,7 @@ export default function Home() {
     if (status === "authenticated") {
       fetchPosts()
     }
-  }, [status, fetchPosts])
+  }, [status, fetchPosts, activeTab]) // Add activeTab to refresh on navigation
 
   const handlePostCreated = (earnedBadges?: any[]) => {
     setShowNewPost(false)
