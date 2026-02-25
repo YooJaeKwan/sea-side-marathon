@@ -1,6 +1,6 @@
 "use client"
 
-import { Crown, Medal, Award, Waves } from "lucide-react"
+import { Crown, Medal, Award } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
@@ -209,14 +209,14 @@ export function RankingPage() {
           {/* Badges section */}
           {badges.length === 0 ? (
             <div className="bg-card rounded-2xl border border-border/50 p-8 text-center">
-              <Waves className="w-8 h-8 text-primary/30 mx-auto mb-3" />
+              <Award className="w-8 h-8 text-primary/30 mx-auto mb-3" />
               <p className="text-sm font-medium text-card-foreground">배지가 아직 없어요</p>
               <p className="text-xs text-muted-foreground mt-1">관리자가 배지를 추가하면 여기에 표시됩니다</p>
             </div>
           ) : (
             <div className="bg-card rounded-2xl border border-border/50 p-4">
               <div className="flex items-center gap-2 mb-4">
-                <Waves className="w-4 h-4 text-primary" />
+                <Award className="w-4 h-4 text-primary" />
                 <h3 className="text-sm font-bold text-card-foreground">내 배지</h3>
                 <span className="text-xs text-muted-foreground ml-auto">
                   {badges.filter((b) => b.earned).length}/{badges.length}

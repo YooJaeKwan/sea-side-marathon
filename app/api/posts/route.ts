@@ -3,7 +3,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { awardBadges } from "@/lib/badges"
 
-// GET /api/posts — fetch all posts with user, comments, likes, waves
+// GET /api/posts — fetch all posts with user, comments, likes
 export async function GET() {
     const session = await auth()
     if (!session?.user?.id) {

@@ -11,11 +11,9 @@ export interface RunningPost {
   comment: string
   photo?: string
   likes: number
-  waves: number
   comments: CommentData[]
   createdAt: string
   liked: boolean
-  waved: boolean
 }
 
 export interface CommentData {
@@ -52,7 +50,6 @@ export const mockPosts: RunningPost[] = [
     pace: "6'16\"",
     comment: "오늘 영종도 해안 도로 따라 뛰었는데 바람이 시원해서 최고였어요! 대회 때도 이런 날씨면 좋겠다.",
     likes: 12,
-    waves: 5,
     comments: [
       { id: "c1", user: { name: "박서연", initials: "SY" }, text: "멋져요! 저도 내일 해안 코스 뛸게요", createdAt: "30분 전" },
     ],
@@ -68,14 +65,12 @@ export const mockPosts: RunningPost[] = [
     pace: "6'26\"",
     comment: "드디어 10km 돌파! 거북이의 끈기 배지 획득했습니다!",
     likes: 24,
-    waves: 11,
     comments: [
       { id: "c2", user: { name: "정다은", initials: "DE" }, text: "축하해요!! 대단해!!", createdAt: "1시간 전" },
       { id: "c3", user: { name: "김해찬", initials: "HC" }, text: "갈수록 빨라지네 ㅎㅎ", createdAt: "45분 전" },
     ],
     createdAt: "5시간 전",
     liked: true,
-    waved: false,
   },
   {
     id: "3",
@@ -85,11 +80,9 @@ export const mockPosts: RunningPost[] = [
     pace: "6'22\"",
     comment: "비 와서 짧게 뛰었지만 기분 좋다!",
     likes: 8,
-    waves: 3,
     comments: [],
     createdAt: "어제",
     liked: false,
-    waved: true,
   },
   {
     id: "4",
@@ -99,7 +92,6 @@ export const mockPosts: RunningPost[] = [
     pace: "6'15\"",
     comment: "오늘은 인터벌 훈련했어요. 다리가 후들후들 ㅠ 대회까지 화이팅!",
     likes: 15,
-    waves: 7,
     comments: [
       { id: "c4", user: { name: "이수민", initials: "SM" }, text: "고생했어! 내일 같이 뛰자", createdAt: "3시간 전" },
     ],
@@ -110,8 +102,8 @@ export const mockPosts: RunningPost[] = [
 ]
 
 export const mockBadges: Badge[] = [
-  { id: "b1", name: "첫 파도", description: "첫 러닝 인증 완료", icon: "wave-first", earned: true, earnedDate: "2026-02-20" },
-  { id: "b2", name: "파도 타기", description: "3일 연속 인증", icon: "wave-streak", earned: true, earnedDate: "2026-02-23" },
+  { id: "b1", name: "첫 인증", description: "첫 러닝 인증 완료", icon: "🌱", earned: true, earnedDate: "2026-02-20" },
+  { id: "b2", name: "꾸준함", description: "3일 연속 인증", icon: "🔥", earned: true, earnedDate: "2026-02-23" },
   { id: "b3", name: "거북이의 끈기", description: "10km 이상 장거리 달성", icon: "turtle", earned: true, earnedDate: "2026-02-24" },
   { id: "b4", name: "돌고래의 속도", description: "평균 페이스 5분대 달성", icon: "dolphin", earned: false },
   { id: "b5", name: "해류 마스터", description: "7일 연속 인증", icon: "current", earned: false },

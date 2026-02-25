@@ -15,12 +15,11 @@ export async function awardBadges(userId: string): Promise<EarnedBadge[]> {
         include: {
             posts: {
                 include: {
-                    _count: { select: { likes: true, waves: true } },
+                    _count: { select: { likes: true } },
                 }
             },
             comments: true,
             likes: true, // likes given
-            waves: true, // waves given
         }
     })
 
@@ -32,7 +31,6 @@ export async function awardBadges(userId: string): Promise<EarnedBadge[]> {
     // 3. Simple stats
     const totalKm = user.posts.reduce((sum: number, p: any) => sum + (p.distance || 0), 0)
     const totalLikesReceived = user.posts.reduce((sum: number, p: any) => sum + (p._count?.likes || 0), 0)
-    const totalWavesReceived = user.posts.reduce((sum: number, p: any) => sum + (p._count?.waves || 0), 0)
     const times = user.posts.map((p: any) => new Date(p.createdAt).getHours())
 
     // 4. Calculate which badges should be awarded
@@ -44,7 +42,6 @@ export async function awardBadges(userId: string): Promise<EarnedBadge[]> {
     if (totalKm >= 200) earnedBadgeNames.push("지구 한 바퀴 꿈나무")
     if (times.some((h: number) => h < 6)) earnedBadgeNames.push("새벽 공기 수집가")
     if (times.some((h: number) => h >= 22)) earnedBadgeNames.push("심야의 질주")
-    if (totalWavesReceived >= 10) earnedBadgeNames.push("베스트 메이트")
     if (totalLikesReceived >= 30) earnedBadgeNames.push("인기쟁이")
     if (user.comments.length >= 20) earnedBadgeNames.push("마당발")
     if (user.posts.some((p: any) => p.content?.includes("비"))) earnedBadgeNames.push("폭우를 뚫고")
@@ -90,7 +87,7 @@ export async function awardBadges(userId: string): Promise<EarnedBadge[]> {
     if (user.category === "5km" && user.posts.length >= 10) earnedBadgeNames.push("하프 마스터")
     if (user.category === "Tea" && user.comments.length >= 10) earnedBadgeNames.push("티 타임 리더")
 
-    if (user.likes.length + user.waves.length >= 5) earnedBadgeNames.push("페이스 메이커")
+    if (user.likes.length >= 5) earnedBadgeNames.push("페이스 메이커")
 
     // 5. Save newly earned badges and collect them
     const alreadyEarned = await prisma.userBadge.findMany({
