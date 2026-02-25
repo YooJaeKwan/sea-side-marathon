@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { awardBadges } from "@/lib/badges"
+import { awardBadges, ensureBadgesExist } from "@/lib/badges"
+
+export const dynamic = "force-dynamic"
 
 // GET /api/badges — all badges + user's earned ones (+ auto-award logic)
 export async function GET() {
@@ -12,13 +14,16 @@ export async function GET() {
 
     const userId = session.user.id
 
-    // 1. Award badges (updates DB and returns newly earned, though we don't need them for full list)
+    // 1. Ensure badges exist in master table
+    await ensureBadgesExist()
+
+    // 2. Award badges (updates DB and returns newly earned)
     await awardBadges(userId)
 
-    // 2. Fetch all available badges
+    // 3. Fetch all available badges
     const allBadges = await prisma.badge.findMany()
 
-    // 3. Return all badges with earned status
+    // 4. Return all badges with earned status
     const userBadges = await prisma.userBadge.findMany({
         where: { userId },
         select: { badgeId: true, earnedAt: true }
