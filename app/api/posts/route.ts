@@ -19,7 +19,7 @@ export async function GET() {
             comments: {
                 orderBy: { createdAt: "asc" },
                 include: {
-                    user: { select: { name: true, initials: true } },
+                    user: { select: { name: true, initials: true, image: true } },
                 },
             },
             likes: { select: { userId: true } },
@@ -44,9 +44,11 @@ export async function GET() {
         likes: post._count.likes,
         comments: post.comments.map((c) => ({
             id: c.id,
+            userId: c.userId,
             user: {
                 name: c.user.name,
                 initials: c.user.initials || c.user.name.slice(0, 2).toUpperCase(),
+                avatar: c.user.image || "",
             },
             text: c.text,
             createdAt: c.createdAt.toISOString(),

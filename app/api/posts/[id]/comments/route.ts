@@ -29,7 +29,7 @@ export async function POST(
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { name: true, initials: true },
+        select: { name: true, initials: true, image: true },
     })
 
     return NextResponse.json({
@@ -38,6 +38,7 @@ export async function POST(
         user: {
             name: user?.name ?? "사용자",
             initials: user?.initials || (user?.name ?? "??").slice(0, 2).toUpperCase(),
+            avatar: user?.image || "",
         },
         text: comment.text,
         createdAt: comment.createdAt.toISOString(),

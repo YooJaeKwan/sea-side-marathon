@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 interface PostComment {
   id: string
   userId: string
-  user: { name: string; initials: string }
+  user: { name: string; initials: string; avatar: string }
   text: string
   createdAt: string
 }
@@ -227,6 +227,7 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
           {comments.map((comment) => (
             <div key={comment.id} className="flex gap-2">
               <Avatar className="w-6 h-6 shrink-0 border border-white ring-1 ring-primary/10">
+                <AvatarImage src={comment.user.avatar} />
                 <AvatarFallback className="text-[9px] bg-primary/10 text-primary font-medium">
                   {comment.user.initials}
                 </AvatarFallback>

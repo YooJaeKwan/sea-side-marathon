@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 
 const CATEGORIES = [
     { value: "10km", label: "10km", emoji: "🏃" },
-    { value: "5km", label: "5km", emoji: "🏃‍♂️" },
+    { value: "5km", label: "5km", emoji: "🏃" },
     { value: "Tea", label: "Tea", emoji: "☕" },
 ]
 
@@ -73,7 +73,7 @@ export default function SignupPage() {
                     </div>
                     <h1 className="text-2xl font-bold text-gray-800">가입 완료! 🎉</h1>
                     <p className="text-sm text-gray-500 text-center leading-relaxed">
-                        {nickname}님, Sea Side Pacer에 오신 걸 환영합니다!<br />
+                        {nickname}님, Sea Side Crew 에 오신 걸 환영합니다!<br />
                         피드로 이동합니다...
                     </p>
                     <div className="w-6 h-6 border-2 border-ocean/30 border-t-ocean rounded-full animate-spin mt-2" />

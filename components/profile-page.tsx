@@ -58,7 +58,7 @@ export function ProfilePage() {
                 </span>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">Sea Side 크루</p>
+            <p className="text-xs text-muted-foreground">Sea Side Crew</p>
           </div>
         </div>
       </div>

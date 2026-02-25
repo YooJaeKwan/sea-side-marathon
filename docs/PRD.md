@@ -1,5 +1,5 @@
 Product Requirements Document (PRD)
-프로젝트명: Sea Side Pacer (가칭)
+프로젝트명: Sea Side Crew (가칭)
 목표일정: 2026년 5월 16일 (Sea Side Marathon 대회일)
 작성일: 2026년 2월 24일
 1. 프로젝트 개요 (Overview)
