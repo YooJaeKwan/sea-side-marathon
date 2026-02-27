@@ -15,6 +15,7 @@ const CATEGORIES = [
 export default function SignupPage() {
     const { data: session, update } = useSession()
     const router = useRouter()
+    const [realName, setRealName] = useState("")
     const [nickname, setNickname] = useState(session?.user?.name || "")
     const [category, setCategory] = useState("")
     const [loading, setLoading] = useState(false)
@@ -22,12 +23,20 @@ export default function SignupPage() {
     const [error, setError] = useState("")
 
     const handleSubmit = async () => {
+        if (!realName.trim()) {
+            setError("실명을 입력해주세요")
+            return
+        }
+        if (realName.trim().length < 2) {
+            setError("실명은 2글자 이상이어야 합니다")
+            return
+        }
         if (!nickname.trim()) {
-            setError("이름을 입력해주세요")
+            setError("닉네임을 입력해주세요")
             return
         }
         if (nickname.trim().length < 2) {
-            setError("이름은 2글자 이상이어야 합니다")
+            setError("닉네임은 2글자 이상이어야 합니다")
             return
         }
         if (!category) {
@@ -43,6 +52,7 @@ export default function SignupPage() {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    realName: realName.trim(),
                     name: nickname.trim(),
                     initials: nickname.trim().slice(0, 2).toUpperCase(),
                     category,
@@ -111,11 +121,27 @@ export default function SignupPage() {
 
                 {/* Form */}
                 <div className="w-full max-w-xs space-y-6">
-                    {/* Name */}
+                    {/* Real Name */}
+                    <div>
+                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                            <span className="text-ocean">●</span>
+                            실명
+                        </label>
+                        <input
+                            type="text"
+                            value={realName}
+                            onChange={(e) => { setRealName(e.target.value); setError("") }}
+                            placeholder="본명을 입력해주세요"
+                            maxLength={10}
+                            className="w-full h-13 bg-white/80 backdrop-blur-sm border border-ocean/15 rounded-2xl px-4 text-base font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-ocean/30 focus:border-ocean/30 transition-all"
+                        />
+                    </div>
+
+                    {/* Nickname */}
                     <div>
                         <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
                             <User className="w-4 h-4 text-ocean" />
-                            이름
+                            닉네임
                         </label>
                         <input
                             type="text"

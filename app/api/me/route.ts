@@ -14,6 +14,7 @@ export async function GET() {
         select: {
             id: true,
             name: true,
+            realName: true,
             email: true,
             image: true,
             initials: true,
@@ -105,10 +106,11 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json()
-    const { name, initials, isOnboarded, category } = body
+    const { name, realName, initials, isOnboarded, category } = body
 
     const data: Record<string, unknown> = {}
     if (name) data.name = name
+    if (realName) data.realName = realName
     if (initials) data.initials = initials
     if (isOnboarded !== undefined) data.isOnboarded = isOnboarded
     if (category) data.category = category

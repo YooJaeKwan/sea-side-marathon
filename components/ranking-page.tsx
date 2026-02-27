@@ -32,9 +32,8 @@ interface BadgeData {
 
 export function RankingPage() {
   const { data: session, status } = useSession()
-  const [activeTab, setActiveTab] = useState<"ranking" | "badges">("ranking")
+  const [activeTab, setActiveTab] = useState<"ranking" | "awards">("ranking")
   const [ranking, setRanking] = useState<RankingUser[]>([])
-  const [badges, setBadges] = useState<BadgeData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
@@ -48,10 +47,6 @@ export function RankingPage() {
         if (activeTab === "ranking") {
           const res = await fetch("/api/ranking")
           if (res.ok) setRanking(await res.json())
-          else setError(true)
-        } else {
-          const res = await fetch("/api/badges")
-          if (res.ok) setBadges(await res.json())
           else setError(true)
         }
       } catch {
@@ -79,15 +74,15 @@ export function RankingPage() {
           랭킹
         </button>
         <button
-          onClick={() => setActiveTab("badges")}
+          onClick={() => setActiveTab("awards")}
           className={cn(
             "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all",
-            activeTab === "badges"
+            activeTab === "awards"
               ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground"
           )}
         >
-          배지
+          시상기준
         </button>
       </div>
 
@@ -205,58 +200,88 @@ export function RankingPage() {
           )}
         </>
       ) : (
-        <>
-          {/* Badges section */}
-          {badges.length === 0 ? (
-            <div className="bg-card rounded-2xl border border-border/50 p-8 text-center">
-              <Award className="w-8 h-8 text-primary/30 mx-auto mb-3" />
-              <p className="text-sm font-medium text-card-foreground">배지가 아직 없어요</p>
-              <p className="text-xs text-muted-foreground mt-1">관리자가 배지를 추가하면 여기에 표시됩니다</p>
-            </div>
-          ) : (
-            <div className="bg-card rounded-2xl border border-border/50 p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Award className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-bold text-card-foreground">내 배지</h3>
-                <span className="text-xs text-muted-foreground ml-auto">
-                  {badges.filter((b) => b.earned).length}/{badges.length}
-                </span>
-              </div>
+        <div className="bg-card rounded-2xl border border-border/50 p-6 space-y-6">
+          <div className="text-center pb-4 border-b border-border/50">
+            <h2 className="text-lg font-bold text-card-foreground mb-1">🏅 시상 기준 안내</h2>
+            <p className="text-xs text-muted-foreground">
+              모든 기록은 앱 인증 기준으로 확인하며,<br />각 부문은 중복 수상 없이 진행됩니다.
+            </p>
+          </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                {badges.map((badge) => {
-                  return (
-                    <div
-                      key={badge.id}
-                      className={cn(
-                        "flex flex-col items-center gap-2 p-3 rounded-xl border transition-all",
-                        badge.earned
-                          ? "bg-primary/5 border-primary/20"
-                          : "bg-muted/30 border-transparent opacity-60"
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-sm",
-                          badge.earned ? "bg-white ring-2 ring-primary/20" : "bg-muted/50 grayscale"
-                        )}
-                      >
-                        {badge.icon}
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[10px] font-bold text-card-foreground leading-tight">{badge.name}</p>
-                        <p className="text-[8px] text-muted-foreground mt-0.5 leading-tight line-clamp-2">{badge.description}</p>
-                      </div>
-                      {badge.earned && (
-                        <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">획득</span>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+          <div className="space-y-5">
+            {/* 1. 출석상 */}
+            <div>
+              <h3 className="text-sm font-bold text-primary flex items-center gap-1.5 mb-2">
+                <span>1️⃣</span> 출석상
+              </h3>
+              <p className="text-xs font-bold text-card-foreground mb-1.5 flex items-center gap-1">
+                <span className="text-[10px]">👉🏻</span> 가장 꾸준히 참여한 분
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
+                <li>2km 이상 또는 20분 이상 걷기,달리기 인증 시 1회 인정</li>
+                <li>한 달 동안 인증 횟수가 가장 많은 분 선정</li>
+                <li>동률일 경우, 총 운동 시간 합산으로 결정</li>
+              </ul>
             </div>
-          )}
-        </>
+
+            {/* 2. 도전상 */}
+            <div>
+              <h3 className="text-sm font-bold text-primary flex items-center gap-1.5 mb-2">
+                <span>2️⃣</span> 도전상
+              </h3>
+              <p className="text-xs font-bold text-card-foreground mb-1.5 flex items-center gap-1">
+                <span className="text-[10px]">👉🏻</span> 이번 달, 스스로 한 단계 성장한 분
+              </p>
+              <p className="text-xs text-muted-foreground mb-1.5">아래 항목 중 1개 이상 달성 시 후보가 됩니다!</p>
+              <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
+                <li>5km 첫 완주</li>
+                <li>누적 20km 달성</li>
+                <li>주 2회 이상 걷기,달리기를 3주 이상 유지</li>
+                <li>30분 연속 달리기 첫 성공</li>
+              </ul>
+              <p className="text-[10px] text-primary mt-1.5 italic">* 위 조건 달성자 중 추첨으로 선정</p>
+            </div>
+
+            {/* 3. 완주상 */}
+            <div>
+              <h3 className="text-sm font-bold text-primary flex items-center gap-1.5 mb-2">
+                <span>3️⃣</span> 완주상
+              </h3>
+              <p className="text-xs font-bold text-card-foreground mb-1.5 flex items-center gap-1">
+                <span className="text-[10px]">👉🏻</span> 도전의 용기를 응원합니다 🏃‍♂️
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
+                <li>한 달 동안 5km 이상 1회 이상 인증 시 후보</li>
+              </ul>
+              <p className="text-[10px] text-primary mt-1.5 italic">* 후보 중 무작위 추첨</p>
+            </div>
+
+            {/* 4. 응원상 */}
+            <div>
+              <h3 className="text-sm font-bold text-primary flex items-center gap-1.5 mb-2">
+                <span>4️⃣</span> 응원상
+              </h3>
+              <p className="text-xs font-bold text-card-foreground mb-1.5 flex items-center gap-1">
+                <span className="text-[10px]">👉🏻</span> 공동체 분위기를 살려준 분
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
+                <li>댓글 및 응원 활동이 활발한 분</li>
+                <li>단순 하트 수가 아닌, 다양한 사람에게 응원을 나눈 분을 우선 고려</li>
+              </ul>
+            </div>
+
+            {/* 5. 랜덤상 */}
+            <div>
+              <h3 className="text-sm font-bold text-primary flex items-center gap-1.5 mb-2">
+                <span>5️⃣</span> 랜덤상
+              </h3>
+              <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
+                <li>최소 1회 이상 걷기,달리기 인증 시 자동 후보</li>
+              </ul>
+              <p className="text-[10px] text-primary mt-1.5 italic">* 후보 중 무작위 추첨</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
