@@ -399,8 +399,8 @@ export function RankingPage() {
           {/* ... existing awards criteria static UI ... */}
           <div className="text-center pb-4 border-b border-border/50">
             <h2 className="text-lg font-bold text-card-foreground mb-1">🏅 시상 기준 안내</h2>
-            <p className="text-xs text-muted-foreground">
-              * 인증 기준 : 2km 이상 또는 20분 이상 걷기, 달리기 기록 사진 인증<br />모든 기록은 앱 인증 기준으로 확인하며, 각 부문은 중복 수상 없이 진행됩니다.
+            <p className="text-left text-xs text-muted-foreground">
+              * 인증 기준 <br />- 2km 이상 또는 20분 이상 걷기, 달리기 기록 사진 인증<br /><br />모든 기록은 앱 인증 기준으로 확인하며, 각 부문은 중복 수상 없이 진행됩니다.
             </p>
           </div>
 
