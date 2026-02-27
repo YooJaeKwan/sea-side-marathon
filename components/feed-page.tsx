@@ -185,7 +185,7 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
       {post.photo && (
         <div className="px-4 pb-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={post.photo} alt="러닝 사진" className="w-full rounded-xl object-cover max-h-64" />
+          <img src={post.photo} alt="러닝 사진" className="w-full h-auto rounded-xl max-h-[500px] object-contain bg-muted/10 border border-border/50" />
         </div>
       )}
 

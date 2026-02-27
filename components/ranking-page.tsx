@@ -370,7 +370,7 @@ export function RankingPage() {
             "도전상 후보",
             rankingData.challenge,
             "아직 도전상 조건을 달성한 분이 없습니다.",
-            "5km 완주, 누적 20km, 주 2회 3주 유지 등 달성 항목"
+            "첫 5km 완주, 누적 20km, 주 2회 3주 유지, 30분 달리기 첫 성공"
           )}
 
           {renderCandidateGrid(

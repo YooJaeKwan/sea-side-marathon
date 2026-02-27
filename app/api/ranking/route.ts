@@ -37,12 +37,6 @@ export async function GET(req: Request) {
             initials: true,
             image: true,
             posts: {
-                where: {
-                    createdAt: {
-                        gte: startOfMonthUTC,
-                        lte: endOfMonthUTC,
-                    },
-                },
                 select: { distance: true, duration: true, createdAt: true },
                 orderBy: { createdAt: "asc" }
             },
@@ -60,60 +54,86 @@ export async function GET(req: Request) {
 
     const processedUsers = users.map((user) => {
         let attendanceDays = 0
-        let totalKm = 0
-        let totalMinutes = 0
-        let maxDistance = 0
-        let maxMinutes = 0
+        let currentTotalKm = 0
+        let currentTotalMinutes = 0
+        let currentMaxDistance = 0
+        let currentMaxMinutes = 0
 
-        // Parse unique KST days for attendance validation
+        let pastTotalKm = 0
+        let pastMaxDistance = 0
+        let pastMaxMinutes = 0
+
         const validKstDays = new Set<number>()
-        const allKstDaysSet = new Set<number>()
+        const currentKstDaysSet = new Set<number>()
+        const pastKstDaysSet = new Set<number>()
 
         user.posts.forEach((p) => {
+            const isCurrentMonth = p.createdAt >= startOfMonthUTC && p.createdAt <= endOfMonthUTC
+            const isPast = p.createdAt < startOfMonthUTC
+
             const kst = new Date(p.createdAt.getTime() + 9 * 60 * 60 * 1000)
             const dayCode = kst.getUTCFullYear() * 10000 + (kst.getUTCMonth() + 1) * 100 + kst.getUTCDate()
-            allKstDaysSet.add(dayCode)
-
-            totalKm += p.distance
-            if (p.distance > maxDistance) maxDistance = p.distance
 
             const parts = p.duration.split(":")
             const h = parseInt(parts[0] || "0", 10)
             const m = parseInt(parts[1] || "0", 10)
             const mins = h * 60 + m
-            totalMinutes += mins
-            if (mins > maxMinutes) maxMinutes = mins
 
-            // Attendance condition: >= 2km OR >= 20 mins
-            if (p.distance >= 2 || mins >= 20) {
-                validKstDays.add(dayCode)
+            if (isPast) {
+                pastKstDaysSet.add(dayCode)
+                pastTotalKm += p.distance
+                if (p.distance > pastMaxDistance) pastMaxDistance = p.distance
+                if (mins > pastMaxMinutes) pastMaxMinutes = mins
+            } else if (isCurrentMonth) {
+                currentKstDaysSet.add(dayCode)
+                currentTotalKm += p.distance
+                currentTotalMinutes += mins
+                if (p.distance > currentMaxDistance) currentMaxDistance = p.distance
+                if (mins > currentMaxMinutes) currentMaxMinutes = mins
+
+                if (p.distance >= 2 || mins >= 20) {
+                    validKstDays.add(dayCode)
+                }
             }
         })
 
         attendanceDays = validKstDays.size
 
-        // Calculate weeks with >= 2 runs (Challenge logic)
-        // Group all posts by ISO week to check consistency
-        const weekCounts: Record<string, number> = {}
-        const kstDaysArray = Array.from(allKstDaysSet)
-        kstDaysArray.forEach(dayCode => {
+        // Calculate weeks with >= 2 runs for PAST
+        const pastWeekCounts: Record<string, number> = {}
+        Array.from(pastKstDaysSet).forEach(dayCode => {
             const y = Math.floor(dayCode / 10000)
             const m = Math.floor((dayCode % 10000) / 100) - 1
             const d = dayCode % 100
             const date = new Date(Date.UTC(y, m, d))
-
-            // ISO week calculation
             date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7))
             const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
             const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
             const weekKey = `${date.getUTCFullYear()}-W${weekNo}`
-
-            weekCounts[weekKey] = (weekCounts[weekKey] || 0) + 1
+            pastWeekCounts[weekKey] = (pastWeekCounts[weekKey] || 0) + 1
+        })
+        let pastWeeksWithTwoRuns = 0
+        Object.values(pastWeekCounts).forEach(count => {
+            if (count >= 2) pastWeeksWithTwoRuns++
         })
 
-        let weeksWithTwoRuns = 0
-        Object.values(weekCounts).forEach(count => {
-            if (count >= 2) weeksWithTwoRuns++
+        // Calculate weeks with >= 2 runs for TOTAL (Past + Current)
+        const totalWeekCounts: Record<string, number> = {}
+        const allKstDaysSet = new Set([...Array.from(pastKstDaysSet), ...Array.from(currentKstDaysSet)])
+        Array.from(allKstDaysSet).forEach(dayCode => {
+            const y = Math.floor(dayCode / 10000)
+            const m = Math.floor((dayCode % 10000) / 100) - 1
+            const d = dayCode % 100
+            const date = new Date(Date.UTC(y, m, d))
+            date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7))
+            const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
+            const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+            const weekKey = `${date.getUTCFullYear()}-W${weekNo}`
+            totalWeekCounts[weekKey] = (totalWeekCounts[weekKey] || 0) + 1
+        })
+        let totalWeeksWithTwoRuns = 0
+        Object.values(totalWeekCounts).forEach(count => {
+            if (count >= 2) totalWeeksWithTwoRuns++
         })
 
         // Cheer logic
@@ -124,18 +144,26 @@ export async function GET(req: Request) {
             }
         })
 
-        // Determine candidate statuses
-        const isCompletionCandidate = maxDistance >= 5
+        // Determine candidate statuses (First time achieved THIS month)
         const challengeConditions: string[] = []
-        if (maxDistance >= 5) challengeConditions.push("5km 완주")
-        if (totalKm >= 20) challengeConditions.push("누적 20km")
-        if (weeksWithTwoRuns >= 3) challengeConditions.push("주 2회 3주")
-        if (maxMinutes >= 30) challengeConditions.push("30분 달리기")
+        if (pastMaxDistance < 5 && currentMaxDistance >= 5) {
+            challengeConditions.push("첫 5km 완주")
+        }
+        if (pastTotalKm < 20 && (pastTotalKm + currentTotalKm) >= 20) {
+            challengeConditions.push("누적 20km")
+        }
+        if (pastWeeksWithTwoRuns < 3 && totalWeeksWithTwoRuns >= 3) {
+            challengeConditions.push("첫 주 2회 3주")
+        }
+        if (pastMaxMinutes < 30 && currentMaxMinutes >= 30) {
+            challengeConditions.push("첫 30분 달리기")
+        }
 
+        const isCompletionCandidate = currentMaxDistance >= 5
         const isChallengeCandidate = challengeConditions.length > 0
 
-        const totalHours = Math.floor(totalMinutes / 60)
-        const remainMins = totalMinutes % 60
+        const totalHours = Math.floor(currentTotalMinutes / 60)
+        const remainMins = currentTotalMinutes % 60
         const totalTimeStr = totalHours > 0 ? `${totalHours}시간 ${remainMins}분` : `${remainMins}분`
 
         return {
@@ -144,8 +172,8 @@ export async function GET(req: Request) {
             initials: user.initials || user.name.slice(0, 2).toUpperCase(),
             avatar: user.image || "",
             attendanceDays,
-            totalKm: Math.round(totalKm * 10) / 10,
-            totalMinutes,
+            totalKm: Math.round(currentTotalKm * 10) / 10,
+            totalMinutes: currentTotalMinutes,
             totalTimeStr,
             isChallengeCandidate,
             challengeConditions,
