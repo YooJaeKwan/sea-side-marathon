@@ -400,7 +400,7 @@ export function RankingPage() {
           <div className="text-center pb-4 border-b border-border/50">
             <h2 className="text-lg font-bold text-card-foreground mb-1">🏅 시상 기준 안내</h2>
             <p className="text-xs text-muted-foreground">
-              모든 기록은 앱 인증 기준으로 확인하며,<br />각 부문은 중복 수상 없이 진행됩니다.
+              * 인증 기준 : 2km 이상 또는 20분 이상 걷기, 달리기 기록 사진 인증<br />모든 기록은 앱 인증 기준으로 확인하며, 각 부문은 중복 수상 없이 진행됩니다.
             </p>
           </div>
 
@@ -414,7 +414,6 @@ export function RankingPage() {
                 <span className="text-[10px]">👉🏻</span> 가장 꾸준히 참여한 분
               </p>
               <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
-                <li>2km 이상 또는 20분 이상 걷기,달리기 인증 시 1회 인정</li>
                 <li>한 달 동안 인증 횟수가 가장 많은 분 선정</li>
                 <li>동률일 경우, 총 운동 시간 합산으로 결정</li>
               </ul>
@@ -444,7 +443,7 @@ export function RankingPage() {
                 <span>3️⃣</span> 완주상
               </h3>
               <p className="text-xs font-bold text-card-foreground mb-1.5 flex items-center gap-1">
-                <span className="text-[10px]">👉🏻</span> 도전의 용기를 응원합니다 🏃‍♂️
+                <span className="text-[10px]">👉🏻</span> 마라톤 완주를 응원합니다 🏃‍♂️
               </p>
               <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
                 <li>한 달 동안 5km 이상 1회 이상 인증 시 후보</li>
