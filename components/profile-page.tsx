@@ -103,8 +103,8 @@ export function ProfilePage() {
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSaveNickname()}
-                  maxLength={10}
-                  className="h-8 px-2 text-sm border font-bold text-card-foreground border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary w-32"
+                  maxLength={20}
+                  className="h-8 px-2 text-sm border font-bold text-card-foreground border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary w-40"
                   autoFocus
                   disabled={saving}
                 />

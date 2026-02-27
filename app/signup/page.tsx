@@ -148,10 +148,10 @@ export default function SignupPage() {
                             value={nickname}
                             onChange={(e) => { setNickname(e.target.value); setError("") }}
                             placeholder="크루에서 사용할 이름"
-                            maxLength={10}
+                            maxLength={20}
                             className="w-full h-13 bg-white/80 backdrop-blur-sm border border-ocean/15 rounded-2xl px-4 text-base font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-ocean/30 focus:border-ocean/30 transition-all"
                         />
-                        <p className="text-xs text-gray-400 mt-1.5">{nickname.length}/10자</p>
+                        <p className="text-xs text-gray-400 mt-1.5">{nickname.length}/20자</p>
                     </div>
 
                     {/* Category */}
