@@ -91,15 +91,17 @@ export function RankingPage() {
               {/* 2nd place */}
               <div className="flex flex-col items-center w-24">
                 <Avatar className={cn("w-14 h-14 ring-2 border-2 border-white", rankIcons[1].ring)}>
-                  {data[1].avatar && <AvatarImage src={data[1].avatar} alt={data[1].name} />}
+                  {data[1].avatar && <AvatarImage src={data[1].avatar} alt={data[1].name} referrerPolicy="no-referrer" />}
                   <AvatarFallback className={cn("text-sm font-bold", rankIcons[1].bg, rankIcons[1].color)}>
                     {data[1].initials}
                   </AvatarFallback>
                 </Avatar>
                 <Medal className="w-5 h-5 text-gray-400 mt-1" />
                 <p className="text-xs font-bold text-card-foreground mt-1 truncate w-full text-center">{data[1].name}</p>
-                <p className="text-[10px] text-muted-foreground">{data[1].value}</p>
-                <div className="w-full h-16 bg-gray-100 rounded-t-lg mt-2 flex items-center justify-center">
+                <p className="text-[10px] text-muted-foreground text-center font-medium bg-white/50 px-1.5 rounded">{data[1].value}</p>
+                {data[1].subValue && <p className="text-[8px] text-muted-foreground/80 mt-0.5 truncate max-w-[80px] text-center">{data[1].subValue.split('·')[0].trim()}</p>}
+                {data[1].subValue && <p className="text-[8px] text-muted-foreground/80 truncate max-w-[80px] text-center">{data[1].subValue.split('·')[1].trim()}</p>}
+                <div className="w-full h-16 bg-gray-100 rounded-t-lg mt-2 flex items-center justify-center border-t border-x border-gray-200">
                   <span className="text-xl font-bold text-gray-400">2</span>
                 </div>
               </div>
@@ -107,15 +109,17 @@ export function RankingPage() {
               {/* 1st place */}
               <div className="flex flex-col items-center w-24">
                 <Avatar className={cn("w-16 h-16 ring-2 border-2 border-white", rankIcons[0].ring)}>
-                  {data[0].avatar && <AvatarImage src={data[0].avatar} alt={data[0].name} />}
+                  {data[0].avatar && <AvatarImage src={data[0].avatar} alt={data[0].name} referrerPolicy="no-referrer" />}
                   <AvatarFallback className={cn("text-base font-bold", rankIcons[0].bg, rankIcons[0].color)}>
                     {data[0].initials}
                   </AvatarFallback>
                 </Avatar>
                 <Crown className="w-6 h-6 text-yellow-500 mt-1" />
                 <p className="text-xs font-bold text-card-foreground mt-1 truncate w-full text-center">{data[0].name}</p>
-                <p className="text-[10px] text-muted-foreground">{data[0].value}</p>
-                <div className="w-full h-24 bg-primary/10 rounded-t-lg mt-2 flex items-center justify-center">
+                <p className="text-[11px] text-primary font-bold bg-primary/5 px-2 py-0.5 rounded-full">{data[0].value}</p>
+                {data[0].subValue && <p className="text-[9px] text-muted-foreground/90 mt-1 truncate max-w-[90px] text-center">{data[0].subValue.split('·')[0].trim()}</p>}
+                {data[0].subValue && <p className="text-[9px] text-muted-foreground/90 truncate max-w-[90px] text-center">{data[0].subValue.split('·')[1].trim()}</p>}
+                <div className="w-full h-24 bg-primary/10 rounded-t-lg mt-2 flex items-center justify-center border-t border-x border-primary/20 shadow-inner">
                   <span className="text-2xl font-bold text-primary">1</span>
                 </div>
               </div>
@@ -123,15 +127,17 @@ export function RankingPage() {
               {/* 3rd place */}
               <div className="flex flex-col items-center w-24">
                 <Avatar className={cn("w-14 h-14 ring-2 border-2 border-white", rankIcons[2].ring)}>
-                  {data[2].avatar && <AvatarImage src={data[2].avatar} alt={data[2].name} />}
+                  {data[2].avatar && <AvatarImage src={data[2].avatar} alt={data[2].name} referrerPolicy="no-referrer" />}
                   <AvatarFallback className={cn("text-sm font-bold", rankIcons[2].bg, rankIcons[2].color)}>
                     {data[2].initials}
                   </AvatarFallback>
                 </Avatar>
                 <Award className="w-5 h-5 text-amber-600 mt-1" />
                 <p className="text-xs font-bold text-card-foreground mt-1 truncate w-full text-center">{data[2].name}</p>
-                <p className="text-[10px] text-muted-foreground">{data[2].value}</p>
-                <div className="w-full h-12 bg-amber-50 rounded-t-lg mt-2 flex items-center justify-center">
+                <p className="text-[10px] text-muted-foreground text-center font-medium bg-white/50 px-1.5 rounded">{data[2].value}</p>
+                {data[2].subValue && <p className="text-[8px] text-muted-foreground/80 mt-0.5 truncate max-w-[80px] text-center">{data[2].subValue.split('·')[0].trim()}</p>}
+                {data[2].subValue && <p className="text-[8px] text-muted-foreground/80 truncate max-w-[80px] text-center">{data[2].subValue.split('·')[1].trim()}</p>}
+                <div className="w-full h-12 bg-amber-50 rounded-t-lg mt-2 flex items-center justify-center border-t border-x border-amber-100">
                   <span className="text-xl font-bold text-amber-600">3</span>
                 </div>
               </div>
@@ -156,13 +162,14 @@ export function RankingPage() {
                   {user.rank}
                 </span>
                 <Avatar className="w-9 h-9 border border-white ring-1 ring-primary/10 shadow-sm shrink-0">
-                  {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                  {user.avatar && <AvatarImage src={user.avatar} alt={user.name} referrerPolicy="no-referrer" />}
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                     {user.initials}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
                   <p className="text-sm font-semibold text-card-foreground truncate">{user.name}</p>
+                  {user.subValue && <p className="text-[10px] text-muted-foreground truncate">{user.subValue}</p>}
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-sm font-bold text-primary">{user.value}</p>
@@ -171,6 +178,52 @@ export function RankingPage() {
             ))}
           </div>
         </div>
+      </div>
+    )
+  }
+
+  const renderChallengeList = (title: string, data: any[], emptyMsg: string, subtitle: string) => {
+    return (
+      <div className="space-y-3">
+        <div className="px-1">
+          <h3 className="text-base font-bold text-card-foreground flex items-center gap-2">
+            <Medal className="w-5 h-5 text-primary" />
+            {title}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+        </div>
+
+        {(!data || data.length === 0) ? (
+          <div className="bg-card rounded-2xl border border-border/50 p-6 text-center">
+            <p className="text-sm font-medium text-muted-foreground">{emptyMsg}</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {data.map((user, i) => (
+              <div key={user.id || i} className="bg-card rounded-2xl border border-border/50 p-3 flex items-center gap-3">
+                <Avatar className="w-10 h-10 border border-white ring-1 ring-primary/10 shadow-sm shrink-0">
+                  {user.avatar && <AvatarImage src={user.avatar} alt={user.name} referrerPolicy="no-referrer" />}
+                  <AvatarFallback className="bg-primary/5 text-primary text-sm font-bold">
+                    {user.initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-card-foreground truncate">{user.name}</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {user.conditions?.map((cond: string, idx: number) => (
+                      <span key={idx} className="px-1.5 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">
+                        {cond}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div className="pt-2 pb-1 text-center">
+              <p className="text-xs text-primary font-semibold">총 {data.length}명의 후보가 있습니다 🎉</p>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -196,7 +249,7 @@ export function RankingPage() {
               {data.map((user, i) => (
                 <div key={user.id || i} className="flex flex-col items-center gap-1.5">
                   <Avatar className="w-12 h-12 border-2 border-white ring-2 ring-primary/10 shadow-sm">
-                    {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                    {user.avatar && <AvatarImage src={user.avatar} alt={user.name} referrerPolicy="no-referrer" />}
                     <AvatarFallback className="bg-primary/5 text-primary text-sm font-bold">
                       {user.initials}
                     </AvatarFallback>
@@ -259,11 +312,11 @@ export function RankingPage() {
             "아직 출석 기록이 없습니다."
           )}
 
-          {renderCandidateGrid(
+          {renderChallengeList(
             "도전상 후보",
             rankingData.challenge,
             "아직 도전상 조건을 달성한 분이 없습니다.",
-            "5km 완주, 누적 20km, 주 2회 3주 유지 등 만족자 추첨"
+            "5km 완주, 누적 20km, 주 2회 3주 유지 등 달성 항목"
           )}
 
           {renderCandidateGrid(

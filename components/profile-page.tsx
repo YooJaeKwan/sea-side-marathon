@@ -47,19 +47,29 @@ export function ProfilePage() {
   }, [])
 
   const handleSaveNickname = async () => {
-    if (!editName.trim() || editName.trim().length < 2) return
+    const newName = editName.trim()
+    if (!newName || newName.length < 2) {
+      alert("닉네임은 2글자 이상 입력해주세요.")
+      return
+    }
+
     setSaving(true)
     try {
+      const newInitials = newName.slice(0, 2).toUpperCase()
       const res = await fetch("/api/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName.trim() }),
+        body: JSON.stringify({ name: newName, initials: newInitials }),
       })
       if (res.ok) {
-        setProfile(prev => prev ? { ...prev, name: editName.trim() } : null)
-        await update() // Update NextAuth session
+        setProfile(prev => prev ? { ...prev, name: newName, initials: newInitials } : null)
+        await update({ name: newName, picture: profile?.image }) // Update NextAuth session
         setIsEditing(false)
+      } else {
+        alert("닉네임 변경에 실패했습니다.")
       }
+    } catch {
+      alert("네트워크 오류가 발생했습니다.")
     } finally {
       setSaving(false)
     }
@@ -82,7 +92,7 @@ export function ProfilePage() {
         </div>
         <div className="px-4 pb-4 -mt-8 relative z-10">
           <Avatar className="w-16 h-16 ring-4 ring-card">
-            {profile?.image && <AvatarImage src={profile.image} alt={profile?.name || "프로필"} />}
+            {profile?.image && <AvatarImage src={profile.image} alt={profile?.name || "프로필"} referrerPolicy="no-referrer" />}
             <AvatarFallback className="bg-primary text-primary-foreground text-xl font-bold">{initials}</AvatarFallback>
           </Avatar>
           <div className="mt-2 min-h-[50px]">
@@ -92,6 +102,7 @@ export function ProfilePage() {
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveNickname()}
                   maxLength={10}
                   className="h-8 px-2 text-sm border font-bold text-card-foreground border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary w-32"
                   autoFocus

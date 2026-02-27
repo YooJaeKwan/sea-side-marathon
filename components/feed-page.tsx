@@ -121,7 +121,7 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
       {/* User header */}
       <div className="flex items-center gap-3 p-4 pb-2">
         <Avatar className="w-10 h-10 border-2 border-white ring-1 ring-primary/10 shadow-sm">
-          {post.user.avatar && <AvatarImage src={post.user.avatar} alt={post.user.name} />}
+          {post.user.avatar && <AvatarImage src={post.user.avatar} alt={post.user.name} referrerPolicy="no-referrer" />}
           <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
             {post.user.initials}
           </AvatarFallback>
@@ -227,7 +227,7 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
           {comments.map((comment) => (
             <div key={comment.id} className="flex gap-2">
               <Avatar className="w-6 h-6 shrink-0 border border-white ring-1 ring-primary/10">
-                <AvatarImage src={comment.user.avatar} />
+                <AvatarImage src={comment.user.avatar} referrerPolicy="no-referrer" />
                 <AvatarFallback className="text-[9px] bg-primary/10 text-primary font-medium">
                   {comment.user.initials}
                 </AvatarFallback>

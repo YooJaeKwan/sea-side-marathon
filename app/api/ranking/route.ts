@@ -121,7 +121,17 @@ export async function GET() {
 
         // Determine candidate statuses
         const isCompletionCandidate = maxDistance >= 5
-        const isChallengeCandidate = maxDistance >= 5 || totalKm >= 20 || maxMinutes >= 30 || weeksWithTwoRuns >= 3
+        const challengeConditions: string[] = []
+        if (maxDistance >= 5) challengeConditions.push("5km 완주")
+        if (totalKm >= 20) challengeConditions.push("누적 20km")
+        if (weeksWithTwoRuns >= 3) challengeConditions.push("주 2회 3주")
+        if (maxMinutes >= 30) challengeConditions.push("30분 달리기")
+
+        const isChallengeCandidate = challengeConditions.length > 0
+
+        const totalHours = Math.floor(totalMinutes / 60)
+        const remainMins = totalMinutes % 60
+        const totalTimeStr = totalHours > 0 ? `${totalHours}시간 ${remainMins}분` : `${remainMins}분`
 
         return {
             id: user.id,
@@ -131,7 +141,9 @@ export async function GET() {
             attendanceDays,
             totalKm: Math.round(totalKm * 10) / 10,
             totalMinutes,
+            totalTimeStr,
             isChallengeCandidate,
+            challengeConditions,
             isCompletionCandidate,
             cheerScore: uniqueUsersCommentedOn.size, // primary sort
             cheerCount: user.comments.length, // secondary sort
@@ -143,12 +155,25 @@ export async function GET() {
     const attendance = [...processedUsers]
         .filter(u => u.attendanceDays > 0)
         .sort((a, b) => b.attendanceDays - a.attendanceDays || b.totalMinutes - a.totalMinutes)
-        .map((u, i) => ({ rank: i + 1, name: u.name, initials: u.initials, avatar: u.avatar, value: `${u.attendanceDays}회` }))
+        .map((u, i) => ({
+            rank: i + 1,
+            name: u.name,
+            initials: u.initials,
+            avatar: u.avatar,
+            value: `${u.attendanceDays}회`,
+            subValue: `${u.totalKm}km · ${u.totalTimeStr}`
+        }))
 
     // 2. Challenge Candidates
     const challenge = processedUsers
         .filter(u => u.isChallengeCandidate)
-        .map(u => ({ id: u.id, name: u.name, initials: u.initials, avatar: u.avatar }))
+        .map(u => ({
+            id: u.id,
+            name: u.name,
+            initials: u.initials,
+            avatar: u.avatar,
+            conditions: u.challengeConditions
+        }))
 
     // 3. Completion Candidates
     const completion = processedUsers
