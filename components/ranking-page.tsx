@@ -33,7 +33,16 @@ interface BadgeData {
 export function RankingPage() {
   const { data: session, status } = useSession()
   const [activeTab, setActiveTab] = useState<"ranking" | "awards">("ranking")
-  const [ranking, setRanking] = useState<RankingUser[]>([])
+
+  // New State Format
+  const [rankingData, setRankingData] = useState<{
+    attendance: any[]
+    challenge: any[]
+    completion: any[]
+    cheer: any[]
+    random: any[]
+  } | null>(null)
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
@@ -46,7 +55,7 @@ export function RankingPage() {
       try {
         if (activeTab === "ranking") {
           const res = await fetch("/api/ranking")
-          if (res.ok) setRanking(await res.json())
+          if (res.ok) setRankingData(await res.json())
           else setError(true)
         }
       } catch {
@@ -58,8 +67,155 @@ export function RankingPage() {
     fetchData()
   }, [activeTab, status])
 
+  const renderRankingPodiumAndList = (title: string, data: any[], emptyMsg: string, isCheer = false) => {
+    if (!data || data.length === 0) {
+      return (
+        <div className="bg-card rounded-2xl border border-border/50 p-6 text-center">
+          <Crown className="w-8 h-8 text-muted mx-auto mb-3" />
+          <p className="text-sm font-medium text-card-foreground">{emptyMsg}</p>
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-4">
+        <h3 className="text-base font-bold text-card-foreground px-1 flex items-center gap-2">
+          {isCheer ? <Award className="w-5 h-5 text-primary" /> : <Crown className="w-5 h-5 text-yellow-500" />}
+          {title}
+        </h3>
+
+        {/* Top 3 Podium */}
+        {data.length >= 3 && (
+          <div className="bg-card rounded-2xl border border-border/50 p-4 pt-6">
+            <div className="flex items-end justify-center gap-3">
+              {/* 2nd place */}
+              <div className="flex flex-col items-center w-24">
+                <Avatar className={cn("w-14 h-14 ring-2 border-2 border-white", rankIcons[1].ring)}>
+                  {data[1].avatar && <AvatarImage src={data[1].avatar} alt={data[1].name} />}
+                  <AvatarFallback className={cn("text-sm font-bold", rankIcons[1].bg, rankIcons[1].color)}>
+                    {data[1].initials}
+                  </AvatarFallback>
+                </Avatar>
+                <Medal className="w-5 h-5 text-gray-400 mt-1" />
+                <p className="text-xs font-bold text-card-foreground mt-1 truncate w-full text-center">{data[1].name}</p>
+                <p className="text-[10px] text-muted-foreground">{data[1].value}</p>
+                <div className="w-full h-16 bg-gray-100 rounded-t-lg mt-2 flex items-center justify-center">
+                  <span className="text-xl font-bold text-gray-400">2</span>
+                </div>
+              </div>
+
+              {/* 1st place */}
+              <div className="flex flex-col items-center w-24">
+                <Avatar className={cn("w-16 h-16 ring-2 border-2 border-white", rankIcons[0].ring)}>
+                  {data[0].avatar && <AvatarImage src={data[0].avatar} alt={data[0].name} />}
+                  <AvatarFallback className={cn("text-base font-bold", rankIcons[0].bg, rankIcons[0].color)}>
+                    {data[0].initials}
+                  </AvatarFallback>
+                </Avatar>
+                <Crown className="w-6 h-6 text-yellow-500 mt-1" />
+                <p className="text-xs font-bold text-card-foreground mt-1 truncate w-full text-center">{data[0].name}</p>
+                <p className="text-[10px] text-muted-foreground">{data[0].value}</p>
+                <div className="w-full h-24 bg-primary/10 rounded-t-lg mt-2 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-primary">1</span>
+                </div>
+              </div>
+
+              {/* 3rd place */}
+              <div className="flex flex-col items-center w-24">
+                <Avatar className={cn("w-14 h-14 ring-2 border-2 border-white", rankIcons[2].ring)}>
+                  {data[2].avatar && <AvatarImage src={data[2].avatar} alt={data[2].name} />}
+                  <AvatarFallback className={cn("text-sm font-bold", rankIcons[2].bg, rankIcons[2].color)}>
+                    {data[2].initials}
+                  </AvatarFallback>
+                </Avatar>
+                <Award className="w-5 h-5 text-amber-600 mt-1" />
+                <p className="text-xs font-bold text-card-foreground mt-1 truncate w-full text-center">{data[2].name}</p>
+                <p className="text-[10px] text-muted-foreground">{data[2].value}</p>
+                <div className="w-full h-12 bg-amber-50 rounded-t-lg mt-2 flex items-center justify-center">
+                  <span className="text-xl font-bold text-amber-600">3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Full list */}
+        <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+          <div className="divide-y divide-border/30">
+            {data.map((user) => (
+              <div key={user.rank} className="flex items-center gap-3 px-4 py-3">
+                <span
+                  className={cn(
+                    "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                    user.rank === 1 && "bg-yellow-50 text-yellow-600",
+                    user.rank === 2 && "bg-gray-100 text-gray-500",
+                    user.rank === 3 && "bg-amber-50 text-amber-600",
+                    user.rank > 3 && "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {user.rank}
+                </span>
+                <Avatar className="w-9 h-9 border border-white ring-1 ring-primary/10 shadow-sm shrink-0">
+                  {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                    {user.initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-card-foreground truncate">{user.name}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-bold text-primary">{user.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderCandidateGrid = (title: string, data: any[], emptyMsg: string, subtitle: string) => {
+    return (
+      <div className="space-y-3">
+        <div className="px-1">
+          <h3 className="text-base font-bold text-card-foreground flex items-center gap-2">
+            <Medal className="w-5 h-5 text-primary" />
+            {title}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+        </div>
+
+        {(!data || data.length === 0) ? (
+          <div className="bg-card rounded-2xl border border-border/50 p-6 text-center">
+            <p className="text-sm font-medium text-muted-foreground">{emptyMsg}</p>
+          </div>
+        ) : (
+          <div className="bg-card rounded-2xl border border-border/50 p-4">
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+              {data.map((user, i) => (
+                <div key={user.id || i} className="flex flex-col items-center gap-1.5">
+                  <Avatar className="w-12 h-12 border-2 border-white ring-2 ring-primary/10 shadow-sm">
+                    {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                    <AvatarFallback className="bg-primary/5 text-primary text-sm font-bold">
+                      {user.initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-[10px] font-bold text-card-foreground truncate w-full text-center">{user.name}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 pt-3 border-t border-border/50 text-center">
+              <p className="text-xs text-primary font-semibold">총 {data.length}명의 후보가 있습니다 🎉</p>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-8">
       {/* Tab switcher */}
       <div className="flex bg-card rounded-xl border border-border/50 p-1">
         <button
@@ -71,7 +227,7 @@ export function RankingPage() {
               : "text-muted-foreground"
           )}
         >
-          랭킹
+          실시간 현황
         </button>
         <button
           onClick={() => setActiveTab("awards")}
@@ -95,112 +251,45 @@ export function RankingPage() {
           <p className="text-sm">데이터를 불러오지 못했습니다.</p>
           <button onClick={() => window.location.reload()} className="mt-2 text-xs text-primary font-bold">다시 시도</button>
         </div>
-      ) : activeTab === "ranking" ? (
-        <>
-          {ranking.length === 0 ? (
-            <div className="bg-card rounded-2xl border border-border/50 p-8 text-center">
-              <Crown className="w-8 h-8 text-yellow-300 mx-auto mb-3" />
-              <p className="text-sm font-medium text-card-foreground">아직 랭킹 데이터가 없어요</p>
-              <p className="text-xs text-muted-foreground mt-1">이번 달 첫 인증을 해보세요!</p>
-            </div>
-          ) : (
-            <>
-              {/* Top 3 Podium */}
-              {ranking.length >= 3 && (
-                <div className="bg-card rounded-2xl border border-border/50 p-4 pt-6">
-                  <div className="flex items-end justify-center gap-3">
-                    {/* 2nd place */}
-                    <div className="flex flex-col items-center w-24">
-                      <Avatar className={cn("w-14 h-14 ring-2 border-2 border-white", rankIcons[1].ring)}>
-                        {ranking[1].avatar && <AvatarImage src={ranking[1].avatar} alt={ranking[1].name} />}
-                        <AvatarFallback className={cn("text-sm font-bold", rankIcons[1].bg, rankIcons[1].color)}>
-                          {ranking[1].initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <Medal className="w-5 h-5 text-gray-400 mt-1" />
-                      <p className="text-xs font-bold text-card-foreground mt-1">{ranking[1].name}</p>
-                      <p className="text-[10px] text-muted-foreground">{ranking[1].certDays}일</p>
-                      <div className="w-full h-16 bg-gray-100 rounded-t-lg mt-2 flex items-center justify-center">
-                        <span className="text-xl font-bold text-gray-400">2</span>
-                      </div>
-                    </div>
-
-                    {/* 1st place */}
-                    <div className="flex flex-col items-center w-24">
-                      <Avatar className={cn("w-16 h-16 ring-2 border-2 border-white", rankIcons[0].ring)}>
-                        {ranking[0].avatar && <AvatarImage src={ranking[0].avatar} alt={ranking[0].name} />}
-                        <AvatarFallback className={cn("text-base font-bold", rankIcons[0].bg, rankIcons[0].color)}>
-                          {ranking[0].initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <Crown className="w-6 h-6 text-yellow-500 mt-1" />
-                      <p className="text-xs font-bold text-card-foreground mt-1">{ranking[0].name}</p>
-                      <p className="text-[10px] text-muted-foreground">{ranking[0].certDays}일</p>
-                      <div className="w-full h-24 bg-primary/10 rounded-t-lg mt-2 flex items-center justify-center">
-                        <span className="text-2xl font-bold text-primary">1</span>
-                      </div>
-                    </div>
-
-                    {/* 3rd place */}
-                    <div className="flex flex-col items-center w-24">
-                      <Avatar className={cn("w-14 h-14 ring-2 border-2 border-white", rankIcons[2].ring)}>
-                        {ranking[2].avatar && <AvatarImage src={ranking[2].avatar} alt={ranking[2].name} />}
-                        <AvatarFallback className={cn("text-sm font-bold", rankIcons[2].bg, rankIcons[2].color)}>
-                          {ranking[2].initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <Award className="w-5 h-5 text-amber-600 mt-1" />
-                      <p className="text-xs font-bold text-card-foreground mt-1">{ranking[2].name}</p>
-                      <p className="text-[10px] text-muted-foreground">{ranking[2].certDays}일</p>
-                      <div className="w-full h-12 bg-amber-50 rounded-t-lg mt-2 flex items-center justify-center">
-                        <span className="text-xl font-bold text-amber-600">3</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Full ranking list */}
-              <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
-                <div className="px-4 py-3 border-b border-border/50">
-                  <h3 className="text-sm font-bold text-card-foreground">이번 달 인증일 랭킹</h3>
-                </div>
-                <div className="divide-y divide-border/30">
-                  {ranking.map((user) => (
-                    <div key={user.rank} className="flex items-center gap-3 px-4 py-3">
-                      <span
-                        className={cn(
-                          "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-                          user.rank === 1 && "bg-yellow-50 text-yellow-600",
-                          user.rank === 2 && "bg-gray-100 text-gray-500",
-                          user.rank === 3 && "bg-amber-50 text-amber-600",
-                          user.rank > 3 && "bg-muted text-muted-foreground"
-                        )}
-                      >
-                        {user.rank}
-                      </span>
-                      <Avatar className="w-9 h-9 border border-white ring-1 ring-primary/10 shadow-sm">
-                        {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                          {user.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-card-foreground">{user.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{user.totalKm} km</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-primary">{user.certDays}일</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
+      ) : activeTab === "ranking" && rankingData ? (
+        <div className="space-y-10">
+          {renderRankingPodiumAndList(
+            "출석상 랭킹",
+            rankingData.attendance,
+            "아직 출석 기록이 없습니다."
           )}
-        </>
-      ) : (
+
+          {renderCandidateGrid(
+            "도전상 후보",
+            rankingData.challenge,
+            "아직 도전상 조건을 달성한 분이 없습니다.",
+            "5km 완주, 누적 20km, 주 2회 3주 유지 등 만족자 추첨"
+          )}
+
+          {renderCandidateGrid(
+            "완주상 후보",
+            rankingData.completion,
+            "아직 5km 이상 완주하신 분이 없습니다.",
+            "한 달에 한 번이라도 5km를 완주하신 분 대상 추첨"
+          )}
+
+          {renderRankingPodiumAndList(
+            "응원상 랭킹",
+            rankingData.cheer,
+            "아직 응원 댓글 활동 기록이 없습니다.",
+            true
+          )}
+
+          {renderCandidateGrid(
+            "랜덤상 후보",
+            rankingData.random,
+            "아직 이번 달 인증자가 없습니다.",
+            "최소 1회 이상 운동을 인증하신 모든 분 대상 추첨"
+          )}
+        </div>
+      ) : activeTab === "awards" ? (
         <div className="bg-card rounded-2xl border border-border/50 p-6 space-y-6">
+          {/* ... existing awards criteria static UI ... */}
           <div className="text-center pb-4 border-b border-border/50">
             <h2 className="text-lg font-bold text-card-foreground mb-1">🏅 시상 기준 안내</h2>
             <p className="text-xs text-muted-foreground">
@@ -282,7 +371,7 @@ export function RankingPage() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
