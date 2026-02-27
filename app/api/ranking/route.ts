@@ -4,17 +4,22 @@ import { prisma } from "@/lib/prisma"
 
 export const dynamic = "force-dynamic"
 
-export async function GET() {
+export async function GET(req: Request) {
     const session = await auth()
     if (!session?.user?.id) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { searchParams } = new URL(req.url)
+    const yearParam = searchParams.get("year")
+    const monthParam = searchParams.get("month")
+
     // Use KST for "Month" boundaries
     const now = new Date()
     const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000)
-    const kstYear = kstNow.getUTCFullYear()
-    const kstMonth = kstNow.getUTCMonth()
+
+    const kstYear = yearParam ? parseInt(yearParam, 10) : kstNow.getUTCFullYear()
+    const kstMonth = monthParam ? parseInt(monthParam, 10) - 1 : kstNow.getUTCMonth()
 
     const startOfMonthKST = new Date(Date.UTC(kstYear, kstMonth, 1))
     const endOfMonthKST = new Date(Date.UTC(kstYear, kstMonth + 1, 0, 23, 59, 59, 999))

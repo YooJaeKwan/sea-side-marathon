@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, MapPin, Timer, TrendingUp, CalendarCheck, ChevronRight, Edit2, Check, X, Award } from "lucide-react"
+import { LogOut, ChevronRight, Edit2, Check, X, Award } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { signOut, useSession } from "next-auth/react"
@@ -160,12 +160,7 @@ export function ProfilePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <StatBox icon={MapPin} label="누적 거리" value={`${stats?.totalKm ?? 0}`} unit="km" iconBg="bg-accent/10" iconColor="text-accent" />
-        <StatBox icon={Timer} label="누적 시간" value={stats?.totalTime ?? "00:00"} unit="시간" iconBg="bg-primary/10" iconColor="text-primary" />
-        <StatBox icon={TrendingUp} label="평균 페이스" value={stats?.avgPace ?? "-"} unit="/km" iconBg="bg-secondary" iconColor="text-card-foreground" />
-        <StatBox icon={CalendarCheck} label="총 인증" value={`${stats?.totalRuns ?? 0}`} unit="일" iconBg="bg-primary/10" iconColor="text-primary" />
-      </div>
+
 
       {/* Badges section */}
       <div className="bg-card rounded-2xl border border-border/50 p-4">
@@ -232,14 +227,3 @@ export function ProfilePage() {
   )
 }
 
-function StatBox({ icon: Icon, label, value, unit, iconBg, iconColor }: { icon: React.ElementType; label: string; value: string; unit: string; iconBg: string; iconColor: string }) {
-  return (
-    <div className="bg-card rounded-xl border border-border/50 p-3.5">
-      <div className="flex items-center gap-2 mb-2">
-        <div className={`w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center`}><Icon className={`w-4 h-4 ${iconColor}`} /></div>
-        <span className="text-[10px] text-muted-foreground font-medium">{label}</span>
-      </div>
-      <p className="text-xl font-bold text-card-foreground">{value}<span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span></p>
-    </div>
-  )
-}

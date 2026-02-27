@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronLeft, ChevronRight, Flame, Timer, MapPin, TrendingUp } from "lucide-react"
+import { ChevronLeft, ChevronRight, Flame, Timer, MapPin, TrendingUp, Clock, CalendarCheck, BarChart3, Activity } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { cn } from "@/lib/utils"
 
@@ -51,6 +51,9 @@ interface MyStats {
   avgPace: string
   totalRuns: number
   streakDays: number
+  preferredTime?: string
+  preferredDay?: string
+  dayBuckets?: number[]
 }
 
 export function CalendarPage() {
@@ -118,18 +121,12 @@ export function CalendarPage() {
 
   const isRunDay = (day: number) => runDates.includes(day)
 
-  return (
-    <div className="space-y-4">
-      {/* Stats summary */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard icon={MapPin} label="누적 거리" value={stats?.totalKm ?? "-"} unit="km" color="text-accent" />
-        <StatCard icon={Timer} label="누적 시간" value={stats?.totalTime ?? "-"} unit="시간" color="text-primary" />
-        <StatCard icon={TrendingUp} label="평균 페이스" value={stats?.avgPace ?? "-"} unit="/km" color="text-card-foreground" />
-        <StatCard icon={Flame} label="연속 인증" value={stats?.streakDays ?? 0} unit="일째" color="text-accent" />
-      </div>
+  const maxDayCount = stats?.dayBuckets ? Math.max(...stats.dayBuckets, 1) : 1
 
-      {/* Calendar */}
-      <div className="bg-card rounded-2xl border border-border/50 p-4">
+  return (
+    <div className="space-y-6 pb-8">
+      {/* 1. Calendar View (Moved to Top) */}
+      <div className="bg-card rounded-2xl border border-border/50 p-4 shadow-sm">
         {/* Month navigation */}
         <div className="flex items-center justify-between mb-4">
           <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-muted transition-colors" aria-label="이전 달">
@@ -193,6 +190,74 @@ export function CalendarPage() {
           <p className="text-xs text-muted-foreground">
             <span className="font-bold text-primary">{runDates.length}</span>일 / {daysInMonth}일
           </p>
+        </div>
+      </div>
+
+      {/* 2. Stats Summary (Moved Below Calendar) */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-bold text-card-foreground flex items-center gap-1.5 px-1">
+          <Activity className="w-4 h-4 text-primary" />
+          나의 종합 기록
+        </h3>
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard icon={MapPin} label="누적 거리" value={stats?.totalKm ?? "-"} unit="km" color="text-accent" />
+          <StatCard icon={Timer} label="누적 시간" value={stats?.totalTime ?? "-"} unit="시간" color="text-primary" />
+          <StatCard icon={TrendingUp} label="평균 페이스" value={stats?.avgPace ?? "-"} unit="/km" color="text-card-foreground" />
+          <StatCard icon={CalendarCheck} label="총 인증" value={stats?.totalRuns ?? 0} unit="일" color="text-primary" />
+        </div>
+      </div>
+
+      {/* 3. New Insights: Day of week & Preferred Time */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-bold text-card-foreground flex items-center gap-1.5 px-1">
+          <BarChart3 className="w-4 h-4 text-primary" />
+          러닝 인사이트
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+          {/* Day of Week Distribution */}
+          <div className="bg-card rounded-xl p-4 border border-border/50">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+                <Flame className="w-3.5 h-3.5 text-orange-500" />
+                가장 많이 뛰는 요일
+              </span>
+              <span className="text-sm font-bold text-primary">{stats?.preferredDay ?? "-"}</span>
+            </div>
+            {/* Simple Bar Chart */}
+            <div className="flex items-end justify-between h-20 gap-1.5 px-1">
+              {stats?.dayBuckets?.map((count, i) => (
+                <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
+                  <div className="w-full bg-muted/50 rounded-t-sm flex items-end justify-center relative h-full">
+                    <div
+                      className={cn(
+                        "w-full rounded-t-sm transition-all duration-500",
+                        count === maxDayCount ? "bg-primary" : "bg-primary/30"
+                      )}
+                      style={{ height: `${(count / maxDayCount) * 100}%`, minHeight: count > 0 ? '4px' : '0' }}
+                    />
+                  </div>
+                  <span className="text-[9px] font-medium text-muted-foreground">{DAYS_KR[i]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Preferred Time */}
+          <div className="bg-card rounded-xl p-4 border border-border/50 flex flex-col justify-center">
+            <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 mb-2">
+              <Clock className="w-3.5 h-3.5 text-blue-500" />
+              주로 달리는 시간
+            </span>
+            <div className="flex items-end gap-2">
+              <span className="text-2xl font-bold text-card-foreground">{stats?.preferredTime ?? "-"}</span>
+              <span className="text-xs text-muted-foreground mb-1">시간대 러너</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-2 bg-muted/30 p-2 rounded-md">
+              주로 {stats?.preferredTime ?? "-"}에 기록을 가장 많이 인증하셨습니다!
+            </p>
+          </div>
+
         </div>
       </div>
     </div>

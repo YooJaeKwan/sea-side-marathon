@@ -1,6 +1,6 @@
 "use client"
 
-import { Crown, Medal, Award } from "lucide-react"
+import { Crown, Medal, Award, ChevronLeft, ChevronRight } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
@@ -43,6 +43,36 @@ export function RankingPage() {
     random: any[]
   } | null>(null)
 
+  // Month Selection State
+  const now = new Date()
+  const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000)
+  const currentYear = kstNow.getUTCFullYear()
+  const currentMonth = kstNow.getUTCMonth() + 1
+
+  const [displayYear, setDisplayYear] = useState(currentYear)
+  const [displayMonth, setDisplayMonth] = useState(currentMonth)
+
+  const handlePrevMonth = () => {
+    if (displayMonth === 1) {
+      setDisplayMonth(12)
+      setDisplayYear(prev => prev - 1)
+    } else {
+      setDisplayMonth(prev => prev - 1)
+    }
+  }
+
+  const handleNextMonth = () => {
+    if (displayYear === currentYear && displayMonth === currentMonth) return
+    if (displayMonth === 12) {
+      setDisplayMonth(1)
+      setDisplayYear(prev => prev + 1)
+    } else {
+      setDisplayMonth(prev => prev + 1)
+    }
+  }
+
+  const isCurrentMonth = displayYear === currentYear && displayMonth === currentMonth
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
@@ -54,7 +84,7 @@ export function RankingPage() {
       setError(false)
       try {
         if (activeTab === "ranking") {
-          const res = await fetch("/api/ranking")
+          const res = await fetch(`/api/ranking?year=${displayYear}&month=${displayMonth}`)
           if (res.ok) setRankingData(await res.json())
           else setError(true)
         }
@@ -65,7 +95,7 @@ export function RankingPage() {
       }
     }
     fetchData()
-  }, [activeTab, status])
+  }, [activeTab, status, displayYear, displayMonth])
 
   const renderRankingPodiumAndList = (title: string, data: any[], emptyMsg: string, isCheer = false) => {
     if (!data || data.length === 0) {
@@ -280,7 +310,7 @@ export function RankingPage() {
               : "text-muted-foreground"
           )}
         >
-          실시간 현황
+          이달의 현황
         </button>
         <button
           onClick={() => setActiveTab("awards")}
@@ -306,6 +336,30 @@ export function RankingPage() {
         </div>
       ) : activeTab === "ranking" && rankingData ? (
         <div className="space-y-10">
+          {/* Month Navigator */}
+          <div className="flex items-center justify-between bg-card rounded-2xl border border-border/50 p-4">
+            <button
+              onClick={handlePrevMonth}
+              className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="text-center">
+              <span className="text-[10px] font-semibold text-muted-foreground block">{displayYear}년</span>
+              <h2 className="text-lg font-bold text-card-foreground">{displayMonth}월 랭킹</h2>
+            </div>
+            <button
+              onClick={handleNextMonth}
+              disabled={isCurrentMonth}
+              className={cn(
+                "p-2 rounded-full transition-colors",
+                isCurrentMonth ? "text-muted-foreground opacity-30 cursor-not-allowed" : "hover:bg-muted text-muted-foreground"
+              )}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
           {renderRankingPodiumAndList(
             "출석상 랭킹",
             rankingData.attendance,

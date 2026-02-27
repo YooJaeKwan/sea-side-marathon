@@ -38,17 +38,56 @@ export async function GET() {
     const totalRuns = posts.length
 
     // Parse durations to total minutes
+    const timeBuckets = { 새벽: 0, 오전: 0, 오후: 0, 저녁: 0, 심야: 0 }
+    const dayBuckets = [0, 0, 0, 0, 0, 0, 0] // Sun=0, Mon=1, ..., Sat=6
+
     let totalMinutes = 0
     for (const p of posts) {
+        // Parse durations to total minutes
         const parts = p.duration.split(":")
         const h = parseInt(parts[0] || "0")
         const m = parseInt(parts[1] || "0")
         totalMinutes += h * 60 + m
+
+        // Assuming KST for local analysis
+        const kstTime = new Date(p.createdAt.getTime() + 9 * 60 * 60 * 1000)
+
+        // Day of week
+        dayBuckets[kstTime.getUTCDay()]++
+
+        // Time bucket
+        const hour = kstTime.getUTCHours()
+        if (hour >= 4 && hour < 9) timeBuckets["새벽"]++
+        else if (hour >= 9 && hour < 12) timeBuckets["오전"]++
+        else if (hour >= 12 && hour < 18) timeBuckets["오후"]++
+        else if (hour >= 18 && hour < 22) timeBuckets["저녁"]++
+        else timeBuckets["심야"]++
     }
 
     const totalHours = Math.floor(totalMinutes / 60)
     const remainMins = totalMinutes % 60
     const totalTime = `${String(totalHours).padStart(2, "0")}:${String(remainMins).padStart(2, "0")}`
+
+    // Find preferred time
+    let preferredTime = "분석 중"
+    let maxTimeCount = 0
+    Object.entries(timeBuckets).forEach(([time, count]) => {
+        if (count > maxTimeCount && count > 0) {
+            maxTimeCount = count
+            preferredTime = time
+        }
+    })
+
+    // Find preferred day
+    const DAYS_KR = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"]
+    let preferredDay = "분석 중"
+    let maxDayCount = 0
+    dayBuckets.forEach((count, idx) => {
+        if (count > maxDayCount && count > 0) {
+            maxDayCount = count
+            preferredDay = DAYS_KR[idx]
+        }
+    })
 
     // Average pace
     let avgPace = "-"
@@ -76,7 +115,7 @@ export async function GET() {
         if (diffDays <= 1) {
             streakDays = 1
             for (let i = 1; i < postDates.length; i++) {
-                const gap = (postDates[i - 1] - postDates[i]) / (1000 * 60 * 60 * 24)
+                const gap = Math.round((postDates[i - 1] - postDates[i]) / (1000 * 60 * 60 * 24))
                 if (gap === 1) {
                     streakDays++
                 } else {
@@ -94,6 +133,9 @@ export async function GET() {
             avgPace,
             totalRuns,
             streakDays,
+            preferredTime,
+            preferredDay,
+            dayBuckets
         },
     })
 }
