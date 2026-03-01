@@ -55,7 +55,6 @@ export const mockPosts: RunningPost[] = [
     ],
     createdAt: "2시간 전",
     liked: false,
-    waved: false,
   },
   {
     id: "2",
@@ -97,7 +96,6 @@ export const mockPosts: RunningPost[] = [
     ],
     createdAt: "어제",
     liked: false,
-    waved: false,
   },
 ]
 

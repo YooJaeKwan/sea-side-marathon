@@ -32,7 +32,8 @@ interface BadgeData {
 
 export function RankingPage() {
   const { data: session, status } = useSession()
-  const [activeTab, setActiveTab] = useState<"ranking" | "awards">("ranking")
+  const [activeTab, setActiveTab] = useState<"ranking" | "awards" | "crew">("crew")
+  const [crewData, setCrewData] = useState<any[] | null>(null)
 
   // New State Format
   const [rankingData, setRankingData] = useState<{
@@ -86,6 +87,10 @@ export function RankingPage() {
         if (activeTab === "ranking") {
           const res = await fetch(`/api/ranking?year=${displayYear}&month=${displayMonth}`)
           if (res.ok) setRankingData(await res.json())
+          else setError(true)
+        } else if (activeTab === "crew" && !crewData) {
+          const res = await fetch("/api/crew")
+          if (res.ok) setCrewData(await res.json())
           else setError(true)
         }
       } catch {
@@ -302,6 +307,17 @@ export function RankingPage() {
       {/* Tab switcher */}
       <div className="flex bg-card rounded-xl border border-border/50 p-1">
         <button
+          onClick={() => setActiveTab("crew")}
+          className={cn(
+            "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all",
+            activeTab === "crew"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground"
+          )}
+        >
+          크루원
+        </button>
+        <button
           onClick={() => setActiveTab("ranking")}
           className={cn(
             "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all",
@@ -310,7 +326,7 @@ export function RankingPage() {
               : "text-muted-foreground"
           )}
         >
-          이달의 현황
+          이달의 크루원
         </button>
         <button
           onClick={() => setActiveTab("awards")}
@@ -474,6 +490,44 @@ export function RankingPage() {
                 <li>최소 1회 이상 걷기,달리기 인증 시 자동 후보</li>
               </ul>
               <p className="text-[10px] text-primary mt-1.5 italic">* 후보 중 무작위 추첨</p>
+            </div>
+          </div>
+        </div>
+      ) : activeTab === "crew" && crewData ? (
+        <div className="space-y-4">
+          <div className="bg-card rounded-2xl border border-border/50 p-4">
+            <h2 className="text-center text-lg font-bold text-card-foreground mb-4">크루원 명단 ({crewData.length}명)</h2>
+            <div className="divide-y divide-border/50">
+              {crewData.map((user) => (
+                <div key={user.id} className="flex items-center gap-3 py-3 px-2">
+                  <Avatar className="w-10 h-10 border border-white ring-1 ring-primary/10 shadow-sm shrink-0">
+                    {user.avatar && <AvatarImage src={user.avatar} alt={user.name} referrerPolicy="no-referrer" />}
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                      {user.initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0 justify-center">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-card-foreground truncate">{user.name}</p>
+                      {user.category && (
+                        <span className={cn(
+                          "px-1.5 py-0.5 rounded text-[10px] font-bold",
+                          user.category === "10km" ? "bg-red-100 text-red-600" :
+                            user.category === "5km" ? "bg-blue-100 text-blue-600" :
+                              "bg-orange-100 text-orange-600"
+                        )}>
+                          {user.category}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      {user.realName && (
+                        <p className="text-[10px] text-muted-foreground/70 font-medium truncate mt-0.5">{user.realName}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

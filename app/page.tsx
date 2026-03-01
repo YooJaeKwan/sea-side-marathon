@@ -14,7 +14,7 @@ import { BadgeAwardPopup } from "@/components/badge-award-popup"
 const TAB_TITLES: Record<string, string> = {
   feed: "피드",
   calendar: "내 기록",
-  ranking: "랭킹",
+  ranking: "크루",
   profile: "프로필",
 }
 

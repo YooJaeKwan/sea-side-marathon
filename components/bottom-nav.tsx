@@ -13,7 +13,7 @@ const navItems = [
   { id: "feed", label: "피드", icon: Home },
   { id: "calendar", label: "내 기록", icon: CalendarDays },
   { id: "new", label: "인증", icon: Plus },
-  { id: "ranking", label: "랭킹", icon: Trophy },
+  { id: "ranking", label: "크루", icon: Trophy },
   { id: "profile", label: "프로필", icon: User },
 ]
 
