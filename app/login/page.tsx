@@ -165,7 +165,7 @@ export default function LoginPage() {
             {/* Footer */}
             <div className="relative z-10 pb-8 text-center">
                 <p className="text-[11px] text-gray-400/80">
-                    © 2026 Sea Side Marathon Crew
+                    © 2026 Sea Side Crew
                 </p>
             </div>
         </div>
