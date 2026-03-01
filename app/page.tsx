@@ -25,7 +25,9 @@ export default function Home() {
   const [showNewPost, setShowNewPost] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [posts, setPosts] = useState<any[]>([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [dday, setDday] = useState(0)
   const [newBadges, setNewBadges] = useState<any[]>([])
   const [editingPost, setEditingPost] = useState<any | null>(null)
@@ -54,7 +56,14 @@ export default function Home() {
       const res = await fetch("/api/posts", { cache: "no-store" })
       if (res.ok) {
         const data = await res.json()
-        setPosts(data)
+        // Determine whether data is an array (old API) or object with posts (new API)
+        if (Array.isArray(data)) {
+          setPosts(data)
+          setNextCursor(null)
+        } else {
+          setPosts(data.posts || [])
+          setNextCursor(data.nextCursor || null)
+        }
       }
     } catch {
       // ignore
@@ -62,6 +71,29 @@ export default function Home() {
       setLoading(false)
     }
   }, [])
+
+  const loadMorePosts = useCallback(async () => {
+    if (!nextCursor || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const res = await fetch(`/api/posts?cursor=${nextCursor}`, { cache: "no-store" })
+      if (res.ok) {
+        const data = await res.json()
+        setPosts((prev) => {
+          // Filter out any duplicates just in case
+          const newPosts = data.posts || []
+          const existingIds = new Set(prev.map(p => p.id))
+          const filteredNew = newPosts.filter((p: any) => !existingIds.has(p.id))
+          return [...prev, ...filteredNew]
+        })
+        setNextCursor(data.nextCursor || null)
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [nextCursor, loadingMore])
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -81,7 +113,7 @@ export default function Home() {
   const renderPage = () => {
     switch (activeTab) {
       case "feed":
-        return <FeedPage posts={posts} loading={loading} onRefresh={fetchPosts} onEdit={(post) => setEditingPost(post)} />
+        return <FeedPage posts={posts} loading={loading} loadingMore={loadingMore} hasMore={!!nextCursor} onLoadMore={loadMorePosts} onRefresh={fetchPosts} onEdit={(post) => setEditingPost(post)} />
       case "calendar":
         return <CalendarPage />
       case "ranking":

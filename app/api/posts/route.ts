@@ -6,13 +6,23 @@ import { awardBadges } from "@/lib/badges"
 export const dynamic = "force-dynamic"
 
 // GET /api/posts — fetch all posts with user, comments, likes
-export async function GET() {
+export async function GET(req: Request) {
     const session = await auth()
     if (!session?.user?.id) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { searchParams } = new URL(req.url)
+    const cursor = searchParams.get("cursor")
+    const limitParams = searchParams.get("limit")
+    const limit = limitParams ? parseInt(limitParams, 10) : 10
+
     const posts = await prisma.post.findMany({
+        take: limit + 1,
+        ...(cursor && {
+            cursor: { id: cursor },
+            skip: 1,
+        }),
         orderBy: { createdAt: "desc" },
         include: {
             user: { select: { id: true, name: true, initials: true, image: true, category: true } },
@@ -26,6 +36,12 @@ export async function GET() {
             _count: { select: { likes: true, comments: true } },
         },
     })
+
+    let nextCursor: string | undefined = undefined
+    if (posts.length > limit) {
+        const nextItem = posts.pop()
+        nextCursor = nextItem!.id
+    }
 
     const formatted = posts.map((post) => ({
         id: post.id,
@@ -57,7 +73,10 @@ export async function GET() {
         liked: post.likes.some((l) => l.userId === session.user!.id),
     }))
 
-    return NextResponse.json(formatted)
+    return NextResponse.json({
+        posts: formatted,
+        nextCursor,
+    })
 }
 
 // POST /api/posts — create a new running post

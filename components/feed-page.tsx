@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Heart, MessageCircle, Clock, MapPin, ChevronDown, ChevronUp, Send, Trash2, Pencil } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -279,14 +279,38 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
 export function FeedPage({
   posts,
   loading,
+  loadingMore,
+  hasMore,
+  onLoadMore,
   onRefresh,
   onEdit,
 }: {
   posts: RunningPost[]
   loading: boolean
+  loadingMore?: boolean
+  hasMore?: boolean
+  onLoadMore?: () => void
   onRefresh: () => void
   onEdit?: (post: RunningPost) => void
 }) {
+  const observerTarget = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && onLoadMore) {
+          onLoadMore()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current)
+    }
+
+    return () => observer.disconnect()
+  }, [hasMore, loadingMore, onLoadMore])
   if (loading) {
     return (
       <div className="space-y-4">
@@ -309,6 +333,12 @@ export function FeedPage({
         posts.map((post) => (
           <PostCard key={post.id} post={post} onUpdate={onRefresh} onEdit={onEdit} />
         ))
+      )}
+
+      {hasMore && (
+        <div ref={observerTarget} className="py-4 flex justify-center h-12">
+          {loadingMore && <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />}
+        </div>
       )}
     </div>
   )
