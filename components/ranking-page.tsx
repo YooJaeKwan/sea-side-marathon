@@ -102,23 +102,34 @@ export function RankingPage() {
     fetchData()
   }, [activeTab, status, displayYear, displayMonth])
 
-  const renderRankingPodiumAndList = (title: string, data: any[], emptyMsg: string, isCheer = false) => {
+  const renderRankingPodiumAndList = (title: string, data: any[], emptyMsg: string, subTitle: string, isCheer = false) => {
     if (!data || data.length === 0) {
       return (
-        <div className="bg-card rounded-2xl border border-border/50 p-6 text-center">
-          <Crown className="w-8 h-8 text-muted mx-auto mb-3" />
-          <p className="text-sm font-medium text-card-foreground">{emptyMsg}</p>
+        <div className="space-y-4">
+          <div className="px-1">
+            <h3 className="text-base font-bold text-card-foreground flex items-center gap-2">
+              <Medal className="w-5 h-5 text-primary" />
+              {title}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">{subTitle}</p>
+          </div>
+          <div className="bg-card rounded-2xl border border-border/50 p-6 text-center">
+            <Crown className="w-8 h-8 text-muted mx-auto mb-3" />
+            <p className="text-sm font-medium text-card-foreground">{emptyMsg}</p>
+          </div>
         </div>
       )
     }
 
     return (
       <div className="space-y-4">
-        <h3 className="text-base font-bold text-card-foreground px-1 flex items-center gap-2">
-          {isCheer ? <Award className="w-5 h-5 text-primary" /> : <Crown className="w-5 h-5 text-yellow-500" />}
-          {title}
-        </h3>
-
+        <div className="px-1">
+          <h3 className="text-base font-bold text-card-foreground px-1 flex items-center gap-2">
+            <Crown className="w-5 h-5 text-yellow-500" />
+            {title}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">{subTitle}</p>
+        </div>
         {/* Top 3 Podium */}
         {data.length >= 3 && (
           <div className="bg-card rounded-2xl border border-border/50 p-4 pt-6">
@@ -379,7 +390,8 @@ export function RankingPage() {
           {renderRankingPodiumAndList(
             "출석상 랭킹",
             rankingData.attendance,
-            "아직 출석 기록이 없습니다."
+            "아직 출석 기록이 없습니다.",
+            "2km 또는 20분 이상 걷기, 달리기 기록 사진 인증"
           )}
 
           {renderChallengeList(
@@ -400,7 +412,7 @@ export function RankingPage() {
             "응원상 랭킹",
             rankingData.cheer,
             "아직 응원 댓글 활동 기록이 없습니다.",
-            true
+            "댓글 및 응원 활동이 활발한 분"
           )}
 
           {renderCandidateGrid(
