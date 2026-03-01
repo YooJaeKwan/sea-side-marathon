@@ -308,8 +308,7 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
 
           <button
             onClick={() => {
-              if (userReaction) handleReact(userReaction);
-              else setShowReactions(!showReactions);
+              setShowReactions(!showReactions);
             }}
             className={cn(
               "flex items-center justify-center gap-2 w-full p-2.5 rounded-lg transition-colors text-[13px] font-bold select-none",
