@@ -15,9 +15,11 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const cursor = searchParams.get("cursor")
     const limitParams = searchParams.get("limit")
+    const filter = searchParams.get("filter")
     const limit = limitParams ? parseInt(limitParams, 10) : 10
 
     const posts = await prisma.post.findMany({
+        where: filter === "me" ? { userId: session.user.id } : undefined,
         take: limit + 1,
         ...(cursor && {
             cursor: { id: cursor },

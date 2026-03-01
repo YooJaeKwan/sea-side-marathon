@@ -22,6 +22,7 @@ export default function Home() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("feed")
+  const [feedFilter, setFeedFilter] = useState<"all" | "me">("all")
   const [showNewPost, setShowNewPost] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [posts, setPosts] = useState<any[]>([])
@@ -53,7 +54,7 @@ export default function Home() {
 
   const fetchPosts = useCallback(async () => {
     try {
-      const res = await fetch("/api/posts", { cache: "no-store" })
+      const res = await fetch(`/api/posts?filter=${feedFilter}`, { cache: "no-store" })
       if (res.ok) {
         const data = await res.json()
         // Determine whether data is an array (old API) or object with posts (new API)
@@ -70,13 +71,13 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [feedFilter])
 
   const loadMorePosts = useCallback(async () => {
     if (!nextCursor || loadingMore) return
     setLoadingMore(true)
     try {
-      const res = await fetch(`/api/posts?cursor=${nextCursor}`, { cache: "no-store" })
+      const res = await fetch(`/api/posts?cursor=${nextCursor}&filter=${feedFilter}`, { cache: "no-store" })
       if (res.ok) {
         const data = await res.json()
         setPosts((prev) => {
@@ -93,13 +94,13 @@ export default function Home() {
     } finally {
       setLoadingMore(false)
     }
-  }, [nextCursor, loadingMore])
+  }, [nextCursor, loadingMore, feedFilter])
 
   useEffect(() => {
     if (status === "authenticated") {
       fetchPosts()
     }
-  }, [status, fetchPosts, activeTab]) // Add activeTab to refresh on navigation
+  }, [status, fetchPosts, activeTab, feedFilter]) // Add activeTab and feedFilter to refresh on navigation
 
   const handlePostCreated = (earnedBadges?: any[]) => {
     setShowNewPost(false)
@@ -113,7 +114,17 @@ export default function Home() {
   const renderPage = () => {
     switch (activeTab) {
       case "feed":
-        return <FeedPage posts={posts} loading={loading} loadingMore={loadingMore} hasMore={!!nextCursor} onLoadMore={loadMorePosts} onRefresh={fetchPosts} onEdit={(post) => setEditingPost(post)} />
+        return <FeedPage
+          posts={posts}
+          loading={loading}
+          loadingMore={loadingMore}
+          hasMore={!!nextCursor}
+          onLoadMore={loadMorePosts}
+          onRefresh={fetchPosts}
+          onEdit={(post) => setEditingPost(post)}
+          feedFilter={feedFilter}
+          onFeedFilterChange={setFeedFilter}
+        />
       case "calendar":
         return <CalendarPage />
       case "ranking":

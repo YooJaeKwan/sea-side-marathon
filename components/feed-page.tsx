@@ -404,6 +404,8 @@ export function FeedPage({
   onLoadMore,
   onRefresh,
   onEdit,
+  feedFilter = "all",
+  onFeedFilterChange,
 }: {
   posts: RunningPost[]
   loading: boolean
@@ -412,6 +414,8 @@ export function FeedPage({
   onLoadMore?: () => void
   onRefresh: () => void
   onEdit?: (post: RunningPost) => void
+  feedFilter?: "all" | "me"
+  onFeedFilterChange?: (filter: "all" | "me") => void
 }) {
   const observerTarget = useRef<HTMLDivElement>(null)
 
@@ -443,6 +447,33 @@ export function FeedPage({
 
   return (
     <div className="space-y-4">
+      {onFeedFilterChange && (
+        <div className="flex bg-muted/50 p-1 rounded-xl mb-4">
+          <button
+            onClick={() => onFeedFilterChange("all")}
+            className={cn(
+              "flex-1 py-2 rounded-lg text-sm font-semibold transition-all",
+              feedFilter === "all"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground"
+            )}
+          >
+            전체 피드
+          </button>
+          <button
+            onClick={() => onFeedFilterChange("me")}
+            className={cn(
+              "flex-1 py-2 rounded-lg text-sm font-semibold transition-all",
+              feedFilter === "me"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground"
+            )}
+          >
+            내 피드
+          </button>
+        </div>
+      )}
+
       {posts.length === 0 ? (
         <div className="bg-card rounded-2xl border border-border/50 p-8 text-center">
           <Heart className="w-8 h-8 text-primary/30 mx-auto mb-3" />
