@@ -10,8 +10,8 @@ const _geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono
 const _notoSansKR = Noto_Sans_KR({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-noto-sans-kr" });
 
 export const metadata: Metadata = {
-  title: 'Sea Side Marathon 크루',
-  description: 'Sea Side Marathon 크루를 위한 소셜 러닝 트래커',
+  title: 'Sea Side Crew',
+  description: 'Sea Side Crew 를 위한 소셜 러닝 트래커',
   icons: {
     icon: [
       {
