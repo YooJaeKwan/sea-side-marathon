@@ -337,7 +337,7 @@ export function RankingPage() {
               : "text-muted-foreground"
           )}
         >
-          이달의 크루원
+          이달의 랭킹
         </button>
         <button
           onClick={() => setActiveTab("awards")}
