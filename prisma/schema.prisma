@@ -91,6 +91,7 @@ model Like {
   id        String   @id @default(cuid())
   postId    String
   userId    String
+  type      String   @default("❤️")
   createdAt DateTime @default(now())
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

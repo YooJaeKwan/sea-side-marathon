@@ -32,8 +32,8 @@ export async function GET(req: Request) {
                     user: { select: { name: true, initials: true, image: true } },
                 },
             },
-            likes: { select: { userId: true } },
-            _count: { select: { likes: true, comments: true } },
+            likes: { select: { userId: true, type: true } },
+            _count: { select: { comments: true } },
         },
     })
 
@@ -57,7 +57,6 @@ export async function GET(req: Request) {
         pace: post.pace,
         comment: post.content,
         photo: post.imageUrl,
-        likes: post._count.likes,
         comments: post.comments.map((c) => ({
             id: c.id,
             userId: c.userId,
@@ -70,7 +69,13 @@ export async function GET(req: Request) {
             createdAt: c.createdAt.toISOString(),
         })),
         createdAt: post.createdAt.toISOString(),
-        liked: post.likes.some((l) => l.userId === session.user!.id),
+        reactions: post.likes.reduce((acc, l) => {
+            const t = l.type as string
+            acc[t] = (acc[t] || 0) + 1
+            return acc
+        }, {} as Record<string, number>),
+        totalReactions: post.likes.length,
+        userReaction: post.likes.find((l) => l.userId === session.user!.id)?.type as string || null,
     }))
 
     return NextResponse.json({

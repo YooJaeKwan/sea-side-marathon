@@ -22,10 +22,11 @@ interface RunningPost {
   pace: string
   comment: string
   photo?: string
-  likes: number
+  reactions: Record<string, number>
+  totalReactions: number
+  userReaction: string | null
   comments: PostComment[]
   createdAt: string
-  liked: boolean
 }
 
 function timeAgo(iso: string): string {
@@ -40,37 +41,75 @@ function timeAgo(iso: string): string {
   return `${days}일 전`
 }
 
+const REACTIONS = ["❤️", "🔥", "🤣", "👏", "👍"]
+
 function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () => void; onEdit?: (post: RunningPost) => void }) {
   const { data: session } = useSession()
-  const [liked, setLiked] = useState(post.liked)
-  const [likeCount, setLikeCount] = useState(post.likes)
+  const [userReaction, setUserReaction] = useState<string | null>(post.userReaction)
+  const [reactionCounts, setReactionCounts] = useState<Record<string, number>>(post.reactions || {})
+  const [totalReactions, setTotalReactions] = useState(post.totalReactions || 0)
+  const [showReactions, setShowReactions] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [comments, setComments] = useState(post.comments)
   const [newComment, setNewComment] = useState("")
   const [rippleId, setRippleId] = useState<string | null>(null)
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null)
 
   // Sync state with props when data is refreshed
   useEffect(() => {
-    setLiked(post.liked)
-    setLikeCount(post.likes)
+    setUserReaction(post.userReaction)
+    setReactionCounts(post.reactions || {})
+    setTotalReactions(post.totalReactions || 0)
     setComments(post.comments)
   }, [post])
 
-  const handleLike = async () => {
-    const prev = liked
-    setLiked(!liked)
-    setLikeCount(liked ? likeCount - 1 : likeCount + 1)
-    setRippleId("like")
+  const handleReact = async (type: string) => {
+    const isSameReaction = userReaction === type
+    const prevReaction = userReaction
+    const prevCounts = { ...reactionCounts }
+    const prevTotal = totalReactions
+
+    // Optimistic UI update
+    if (isSameReaction) {
+      // Removing reaction
+      setUserReaction(null)
+      setTotalReactions(prevTotal - 1)
+      setReactionCounts(prev => ({ ...prev, [type]: Math.max(0, (prev[type] || 0) - 1) }))
+    } else {
+      // Adding or changing reaction
+      setUserReaction(type)
+      if (prevReaction) {
+        // Changing
+        setReactionCounts(prev => ({
+          ...prev,
+          [prevReaction]: Math.max(0, (prev[prevReaction] || 0) - 1),
+          [type]: (prev[type] || 0) + 1
+        }))
+      } else {
+        // New reaction
+        setTotalReactions(prevTotal + 1)
+        setReactionCounts(prev => ({ ...prev, [type]: (prev[type] || 0) + 1 }))
+      }
+    }
+
+    setShowReactions(false)
+    setRippleId("react")
     setTimeout(() => setRippleId(null), 600)
 
     try {
-      const res = await fetch(`/api/posts/${post.id}/like`, { method: "POST" })
+      const res = await fetch(`/api/posts/${post.id}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type })
+      })
       if (res.ok) {
         onUpdate()
       }
     } catch {
-      setLiked(prev)
-      setLikeCount(prev ? likeCount : likeCount - 1)
+      // Rollback on failure
+      setUserReaction(prevReaction)
+      setReactionCounts(prevCounts)
+      setTotalReactions(prevTotal)
     }
   }
 
@@ -194,30 +233,111 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
         <p className="px-4 pb-3 text-sm leading-relaxed text-card-foreground">{post.comment}</p>
       )}
 
+      {/* Reactions & Comments Summary */}
+      {(totalReactions > 0 || comments.length > 0) && (
+        <div className="px-4 py-2 flex items-center justify-between text-xs mt-1 border-t border-border/30">
+          <div className="flex items-center gap-0.5 h-6">
+            {totalReactions > 0 ? (
+              <>
+                <div className="flex items-center gap-0.5">
+                  {Object.entries(reactionCounts)
+                    .filter(([_, count]) => count > 0)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([emoji]) => (
+                      <span
+                        key={emoji}
+                        className="text-[14px] leading-none"
+                      >
+                        {emoji}
+                      </span>
+                    ))}
+                </div>
+                <span className="text-muted-foreground font-medium mt-0.5 ml-0.5 flex items-center">{totalReactions}</span>
+              </>
+            ) : <span />}
+          </div>
+          {comments.length > 0 && (
+            <button
+              onClick={() => setShowComments(!showComments)}
+              className="text-muted-foreground hover:underline font-medium"
+            >
+              댓글 {comments.length}개
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Action bar */}
-      <div className="flex items-center border-t border-border/50 px-4 py-2.5">
-        <button
-          onClick={handleLike}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-sm relative overflow-hidden",
-            liked ? "text-red-500" : "text-muted-foreground"
-          )}
+      <div className="border-t border-border/50 px-2 py-1 flex items-stretch">
+        <div
+          className="relative flex-1 group"
+          onMouseEnter={() => window.matchMedia("(hover: hover)").matches && setShowReactions(true)}
+          onMouseLeave={() => window.matchMedia("(hover: hover)").matches && setShowReactions(false)}
         >
-          {rippleId === "like" && (
-            <span className="absolute inset-0 bg-red-500/10 rounded-full animate-ripple" />
+          {/* Invisible overlay for tap to close on mobile */}
+          {showReactions && (
+            <div
+              className="fixed inset-0 z-40 md:hidden"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowReactions(false);
+              }}
+            />
           )}
-          <Heart className={cn("w-4 h-4 relative z-10", liked && "fill-current")} />
-          <span className="relative z-10 font-medium">{likeCount}</span>
-        </button>
+
+          {/* Reaction Picker Popover */}
+          <div className={cn(
+            "absolute left-2 bottom-full mb-1.5 z-50 bg-card/95 backdrop-blur-md rounded-full shadow-[0_4px_20px_rgb(0,0,0,0.15)] border border-border/50 flex flex-nowrap items-center p-1.5 gap-1 transition-all duration-300 origin-bottom-left",
+            showReactions ? "opacity-100 scale-100 visible translate-y-0" : "opacity-0 scale-90 invisible pointer-events-none translate-y-2"
+          )}>
+            {REACTIONS.map((emoji) => (
+              <button
+                key={emoji}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleReact(emoji);
+                }}
+                className="w-10 h-10 flex items-center justify-center text-[22px] hover:bg-muted rounded-full transition-transform hover:-translate-y-1 hover:scale-110 shrink-0"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => {
+              if (userReaction) handleReact(userReaction);
+              else setShowReactions(!showReactions);
+            }}
+            className={cn(
+              "flex items-center justify-center gap-2 w-full p-2.5 rounded-lg transition-colors text-[13px] font-bold select-none",
+              userReaction ? "text-primary" : "text-muted-foreground hover:bg-muted/50"
+            )}
+          >
+            {userReaction ? (
+              <div className="flex items-center gap-1.5 animate-in zoom-in spin-in-6 duration-200">
+                <span className="text-base leading-none shrink-0">{userReaction}</span>
+                <span className="shrink-0 whitespace-nowrap">
+                  {userReaction === "❤️" ? "좋아요" : userReaction === "👏" ? "응원해요" : userReaction === "🔥" ? "대단해요" : userReaction === "🤣" ? "재밌어요" : userReaction === "👍" ? "최고예요" : "반응"}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <Heart className="w-[18px] h-[18px] shrink-0" />
+                <span className="shrink-0 whitespace-nowrap">반응</span>
+              </div>
+            )}
+          </button>
+        </div>
+
         <button
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-muted-foreground text-sm ml-auto"
+          className="flex items-center justify-center gap-2 flex-1 p-2.5 rounded-lg transition-colors text-[13px] font-bold text-muted-foreground hover:bg-muted/50 select-none"
         >
-          <MessageCircle className="w-4 h-4" />
-          <span className="font-medium">{comments.length}</span>
-          {comments.length > 0 && (
-            showComments ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
-          )}
+          <MessageCircle className="w-[18px] h-[18px] shrink-0" />
+          <span className="shrink-0 whitespace-nowrap">댓글 달기</span>
         </button>
       </div>
 

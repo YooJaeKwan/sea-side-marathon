@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 
 // POST /api/posts/[id]/like — toggle like
 export async function POST(
-    _req: Request,
+    req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await auth()
@@ -13,6 +13,8 @@ export async function POST(
     }
 
     const { id: postId } = await params
+    const body = await req.json().catch(() => ({}))
+    const type = body.type || "❤️" // Default to heart if no type provided
 
     const existingLike = await prisma.like.findUnique({
         where: {
@@ -24,17 +26,29 @@ export async function POST(
     })
 
     if (existingLike) {
-        await prisma.like.delete({
-            where: { id: existingLike.id },
-        })
-        return NextResponse.json({ liked: false })
+        if (existingLike.type === type) {
+            // Un-react if same type
+            await prisma.like.delete({
+                where: { id: existingLike.id },
+            })
+            return NextResponse.json({ reacted: false, type: null })
+        } else {
+            // Update to new reaction type
+            await prisma.like.update({
+                where: { id: existingLike.id },
+                data: { type },
+            })
+            return NextResponse.json({ reacted: true, type })
+        }
     } else {
+        // Create new reaction
         await prisma.like.create({
             data: {
                 postId,
                 userId: session.user.id,
+                type,
             },
         })
-        return NextResponse.json({ liked: true })
+        return NextResponse.json({ reacted: true, type })
     }
 }
