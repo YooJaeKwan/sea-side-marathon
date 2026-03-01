@@ -348,7 +348,7 @@ export function RankingPage() {
               : "text-muted-foreground"
           )}
         >
-          시상기준
+          시상 기준
         </button>
       </div>
 
