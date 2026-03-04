@@ -48,6 +48,15 @@ export async function GET(req: Request) {
                     },
                 },
                 select: { postId: true, post: { select: { userId: true } } },
+            },
+            likes: {
+                where: {
+                    createdAt: {
+                        gte: startOfMonthUTC,
+                        lte: endOfMonthUTC,
+                    },
+                },
+                select: { postId: true, post: { select: { userId: true } } },
             }
         },
     })
@@ -143,6 +152,11 @@ export async function GET(req: Request) {
                 uniqueUsersCommentedOn.add(c.post.userId)
             }
         })
+        user.likes.forEach(l => {
+            if (l.post.userId !== user.id) {
+                uniqueUsersCommentedOn.add(l.post.userId)
+            }
+        })
 
         // Determine candidate statuses (First time achieved THIS month)
         const challengeConditions: string[] = []
@@ -179,7 +193,7 @@ export async function GET(req: Request) {
             challengeConditions,
             isCompletionCandidate,
             cheerScore: uniqueUsersCommentedOn.size, // primary sort
-            cheerCount: user.comments.length, // secondary sort
+            cheerCount: user.comments.length + user.likes.length, // secondary sort
             hasAnyCert: user.posts.length > 0
         }
     })

@@ -411,8 +411,8 @@ export function RankingPage() {
           {renderRankingPodiumAndList(
             "응원상 랭킹",
             rankingData.cheer,
-            "아직 응원 댓글 활동 기록이 없습니다.",
-            "댓글 및 응원 활동이 활발한 분"
+            "아직 댓글이나 반응 기록이 없습니다.",
+            "댓글 및 반응 활동이 활발한 분"
           )}
 
           {renderCandidateGrid(
@@ -488,8 +488,8 @@ export function RankingPage() {
                 <span className="text-[10px]">👉🏻</span> 공동체 분위기를 살려준 분
               </p>
               <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
-                <li>댓글 및 응원 활동이 활발한 분</li>
-                <li>단순 하트 수가 아닌, 다양한 사람에게 응원을 나눈 분을 우선 고려</li>
+                <li>댓글 및 이모지 반응을 통해 응원 활동이 활발한 분</li>
+                <li>단순 활동 횟수보다 여러 크루원에게 응원과 격려를 나눈 분을 우선 고려</li>
               </ul>
             </div>
 
