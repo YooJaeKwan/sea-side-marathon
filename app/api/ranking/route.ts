@@ -147,14 +147,18 @@ export async function GET(req: Request) {
 
         // Cheer logic
         const uniqueUsersCommentedOn = new Set<string>()
+        const uniquePostsCheeredOn = new Set<string>()
+
         user.comments.forEach(c => {
             if (c.post.userId !== user.id) {
                 uniqueUsersCommentedOn.add(c.post.userId)
+                uniquePostsCheeredOn.add(c.postId)
             }
         })
         user.likes.forEach(l => {
             if (l.post.userId !== user.id) {
                 uniqueUsersCommentedOn.add(l.post.userId)
+                uniquePostsCheeredOn.add(l.postId)
             }
         })
 
@@ -193,7 +197,7 @@ export async function GET(req: Request) {
             challengeConditions,
             isCompletionCandidate,
             cheerScore: uniqueUsersCommentedOn.size, // primary sort
-            cheerCount: user.comments.length + user.likes.length, // secondary sort
+            cheerCount: uniquePostsCheeredOn.size, // secondary sort
             hasAnyCert: user.posts.length > 0
         }
     })
