@@ -239,20 +239,17 @@ function PostCard({ post, onUpdate, onEdit }: { post: RunningPost; onUpdate: () 
           <div className="flex items-center gap-0.5 h-6">
             {totalReactions > 0 ? (
               <>
-                <div className="flex items-center gap-0.5">
+                <div className="flex items-center gap-2">
                   {Object.entries(reactionCounts)
                     .filter(([_, count]) => count > 0)
                     .sort((a, b) => b[1] - a[1])
-                    .map(([emoji]) => (
-                      <span
-                        key={emoji}
-                        className="text-[14px] leading-none"
-                      >
-                        {emoji}
-                      </span>
+                    .map(([emoji, count]) => (
+                      <div key={emoji} className="flex items-center gap-0.5">
+                        <span className="text-[14px] leading-none">{emoji}</span>
+                        <span className="text-xs text-muted-foreground font-medium">{count}</span>
+                      </div>
                     ))}
                 </div>
-                <span className="text-muted-foreground font-medium mt-0.5 ml-0.5 flex items-center">{totalReactions}</span>
               </>
             ) : <span />}
           </div>
