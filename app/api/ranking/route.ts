@@ -146,20 +146,16 @@ export async function GET(req: Request) {
         })
 
         // Cheer logic
-        const uniqueUsersCommentedOn = new Set<string>()
-        const uniquePostsCommentedOn = new Set<string>()
-        const uniquePostsLiked = new Set<string>()
+        let cheerCount = 0
 
         user.comments.forEach(c => {
             if (c.post.userId !== user.id) {
-                uniqueUsersCommentedOn.add(c.post.userId)
-                uniquePostsCommentedOn.add(c.postId)
+                cheerCount++
             }
         })
         user.likes.forEach(l => {
             if (l.post.userId !== user.id) {
-                uniqueUsersCommentedOn.add(l.post.userId)
-                uniquePostsLiked.add(l.postId)
+                cheerCount++
             }
         })
 
@@ -197,8 +193,7 @@ export async function GET(req: Request) {
             isChallengeCandidate,
             challengeConditions,
             isCompletionCandidate,
-            cheerScore: uniqueUsersCommentedOn.size, // primary sort
-            cheerCount: uniquePostsCommentedOn.size + uniquePostsLiked.size, // secondary sort
+            cheerCount,
             hasAnyCert: user.posts.length > 0
         }
     })
@@ -232,10 +227,10 @@ export async function GET(req: Request) {
         .filter(u => u.isCompletionCandidate)
         .map(u => ({ id: u.id, name: u.name, initials: u.initials, avatar: u.avatar }))
 
-    // 4. Cheer Ranking (Sort: cheerScore desc, cheerCount desc)
+    // 4. Cheer Ranking (Sort: cheerCount desc)
     const cheer = [...processedUsers]
-        .filter(u => u.cheerScore > 0)
-        .sort((a, b) => b.cheerScore - a.cheerScore || b.cheerCount - a.cheerCount)
+        .filter(u => u.cheerCount > 0)
+        .sort((a, b) => b.cheerCount - a.cheerCount)
         .map((u, i) => ({ rank: i + 1, name: u.name, initials: u.initials, avatar: u.avatar, value: `${u.cheerCount}회` }))
 
     // 5. Random Candidates

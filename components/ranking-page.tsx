@@ -489,7 +489,7 @@ export function RankingPage() {
               </p>
               <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
                 <li>댓글 및 이모지 반응을 통해 응원 활동이 활발한 분</li>
-                <li>단순 활동 횟수보다 여러 크루원에게 응원과 격려를 나눈 분을 우선 고려</li>
+                <li>다른 크루원의 게시글에 남긴 댓글 및 반응 총 횟수를 합산하여 선정합니다.</li>
               </ul>
             </div>
 
