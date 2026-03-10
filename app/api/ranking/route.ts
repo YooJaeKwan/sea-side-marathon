@@ -229,7 +229,7 @@ export async function GET(req: Request) {
 
     // 4. Cheer Ranking (Sort: cheerCount desc)
     const cheer = [...processedUsers]
-        .filter(u => u.cheerCount > 0)
+        .filter(u => u.cheerCount > 0 && u.name !== "달려라햄찌")
         .sort((a, b) => b.cheerCount - a.cheerCount)
         .map((u, i) => ({ rank: i + 1, name: u.name, initials: u.initials, avatar: u.avatar, value: `${u.cheerCount}회` }))
 
