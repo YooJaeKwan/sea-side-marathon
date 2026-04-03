@@ -402,9 +402,9 @@ export function RankingPage() {
           {isFinalPeriod && (
             <div className="bg-amber-50 rounded-xl border border-amber-200 px-4 py-3">
               <p className="text-xs font-bold text-amber-700 flex items-center gap-1 mb-2">
-                <span>🏆</span> 4월 수상자 안내
+                <span>🏆</span> 3월 수상자 안내
               </p>
-              <p className="text-[10px] text-amber-600 mb-2">아래 분들은 4월에 이미 수상하셨으므로 해당 부문에서 제외됩니다.</p>
+              <p className="text-[10px] text-amber-600 mb-2">아래 분들은 3월에 이미 수상하셨으므로 해당 부문에서 제외됩니다.</p>
               <div className="space-y-1">
                 <p className="text-[10px] text-amber-800"><span className="font-bold">출석상</span> · 행복한멧돼지님</p>
                 <p className="text-[10px] text-amber-800"><span className="font-bold">도전상</span> · 아니따님, 차차님</p>
