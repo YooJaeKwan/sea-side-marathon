@@ -21,16 +21,25 @@ export async function GET(req: Request) {
     const kstYear = yearParam ? parseInt(yearParam, 10) : kstNow.getUTCFullYear()
     const kstMonth = monthParam ? parseInt(monthParam, 10) - 1 : kstNow.getUTCMonth()
 
-    // Check if this is the final ranking period (April 2026 = 4/1 ~ 5/16)
+    // Check if this is the final ranking period (April 2026 = 4/1 ~ 5/10)
     const isFinalPeriod = kstYear === 2026 && kstMonth === 3 // month is 0-indexed, so 3 = April
+
+    // April winners exclusion lists (per category)
+    const aprilWinnerExclusions: Record<string, string[]> = {
+        attendance: ["행복한멧돼지"],
+        challenge: ["아니따", "차차"],
+        badge: ["김의영"],  // real name match
+        cheer: ["슬기짱", "회개러너"],
+        random: ["찡타로"],
+    }
 
     let startOfMonthKST: Date
     let endOfMonthKST: Date
 
     if (isFinalPeriod) {
-        // Fixed period: 2026-04-01 ~ 2026-05-16 KST
+        // Fixed period: 2026-04-01 ~ 2026-05-10 KST
         startOfMonthKST = new Date(Date.UTC(2026, 3, 1)) // April 1
-        endOfMonthKST = new Date(Date.UTC(2026, 4, 16, 23, 59, 59, 999)) // May 16
+        endOfMonthKST = new Date(Date.UTC(2026, 4, 10, 23, 59, 59, 999)) // May 10
     } else {
         startOfMonthKST = new Date(Date.UTC(kstYear, kstMonth, 1))
         endOfMonthKST = new Date(Date.UTC(kstYear, kstMonth + 1, 0, 23, 59, 59, 999))
@@ -46,6 +55,7 @@ export async function GET(req: Request) {
         select: {
             id: true,
             name: true,
+            realName: true,
             initials: true,
             image: true,
             posts: {
@@ -239,6 +249,7 @@ export async function GET(req: Request) {
         return {
             id: user.id,
             name: user.name,
+            realName: user.realName || "",
             initials: user.initials || user.name.slice(0, 2).toUpperCase(),
             avatar: user.image || "",
             attendanceDays,
@@ -256,9 +267,17 @@ export async function GET(req: Request) {
         }
     })
 
+    // Helper to check if user is an April winner for a category
+    // Checks both display name and realName
+    const isAprilWinner = (userName: string, realName: string, category: string) => {
+        if (!isFinalPeriod) return false
+        const exclusions = aprilWinnerExclusions[category] || []
+        return exclusions.includes(userName) || (realName && exclusions.includes(realName))
+    }
+
     // 1. Attendance Ranking (Sort: attendanceDays desc, totalMinutes desc)
     const attendance = [...processedUsers]
-        .filter(u => u.attendanceDays > 0)
+        .filter(u => u.attendanceDays > 0 && !isAprilWinner(u.name, u.realName, "attendance"))
         .sort((a, b) => b.attendanceDays - a.attendanceDays || b.totalMinutes - a.totalMinutes)
         .map((u, i) => ({
             rank: i + 1,
@@ -271,7 +290,7 @@ export async function GET(req: Request) {
 
     // 2. Challenge Candidates
     const challenge = processedUsers
-        .filter(u => u.isChallengeCandidate)
+        .filter(u => u.isChallengeCandidate && !isAprilWinner(u.name, u.realName, "challenge"))
         .map(u => ({
             id: u.id,
             name: u.name,
@@ -281,8 +300,9 @@ export async function GET(req: Request) {
         }))
 
     // 3. Badge Ranking (Sort: badgeCount desc, allTimeTotalMinutes desc) — all-time stats
+    // For badge, also check realName for 김의영
     const badge = [...processedUsers]
-        .filter(u => u.badgeCount > 0)
+        .filter(u => u.badgeCount > 0 && !isAprilWinner(u.name, u.realName, "badge"))
         .sort((a, b) => b.badgeCount - a.badgeCount || b.allTimeTotalMinutes - a.allTimeTotalMinutes)
         .map((u, i) => ({
             rank: i + 1,
@@ -295,13 +315,13 @@ export async function GET(req: Request) {
 
     // 4. Cheer Ranking (Sort: cheerCount desc)
     const cheer = [...processedUsers]
-        .filter(u => u.cheerCount > 0 && u.name !== "달려라햄찌")
+        .filter(u => u.cheerCount > 0 && u.name !== "달려라햄찌" && !isAprilWinner(u.name, u.realName, "cheer"))
         .sort((a, b) => b.cheerCount - a.cheerCount)
         .map((u, i) => ({ rank: i + 1, name: u.name, initials: u.initials, avatar: u.avatar, value: `${u.cheerCount}회` }))
 
     // 5. Random Candidates (at least 1 cert in the current period)
     const random = processedUsers
-        .filter(u => u.attendanceDays > 0)
+        .filter(u => u.attendanceDays > 0 && !isAprilWinner(u.name, u.realName, "random"))
         .map(u => ({ id: u.id, name: u.name, initials: u.initials, avatar: u.avatar }))
 
     return NextResponse.json({

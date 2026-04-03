@@ -393,8 +393,26 @@ export function RankingPage() {
           {/* Period Info */}
           {isFinalPeriod && (
             <div className="bg-primary/5 rounded-xl border border-primary/20 px-4 py-3 text-center">
-              <p className="text-xs font-bold text-primary">📅 산정 기간: 2026.04.01 ~ 2026.05.16</p>
+              <p className="text-xs font-bold text-primary">📅 산정 기간: 2026.04.01 ~ 2026.05.10</p>
               <p className="text-[10px] text-muted-foreground mt-1">4월은 마라톤 당일까지의 기록을 기준으로 최종 시상합니다</p>
+            </div>
+          )}
+
+          {/* April Winners Exclusion Notice */}
+          {isFinalPeriod && (
+            <div className="bg-amber-50 rounded-xl border border-amber-200 px-4 py-3">
+              <p className="text-xs font-bold text-amber-700 flex items-center gap-1 mb-2">
+                <span>🏆</span> 4월 수상자 안내
+              </p>
+              <p className="text-[10px] text-amber-600 mb-2">아래 분들은 4월에 이미 수상하셨으므로 해당 부문에서 제외됩니다.</p>
+              <div className="space-y-1">
+                <p className="text-[10px] text-amber-800"><span className="font-bold">출석상</span> · 행복한멧돼지</p>
+                <p className="text-[10px] text-amber-800"><span className="font-bold">도전상</span> · 아니따, 차차</p>
+                <p className="text-[10px] text-amber-800"><span className="font-bold">완주상</span> · 용용(김의영)</p>
+                <p className="text-[10px] text-amber-800"><span className="font-bold">응원상</span> · 슬기짱, 회개러너</p>
+                <p className="text-[10px] text-amber-800"><span className="font-bold">랜덤상</span> · 찡타로</p>
+              </div>
+              <p className="text-[10px] text-amber-500 mt-2 italic">축하드립니다! 🎉 더 많은 분들께 기회를 드리고자 합니다.</p>
             </div>
           )}
 
@@ -440,7 +458,7 @@ export function RankingPage() {
           {/* ... existing awards criteria static UI ... */}
           <div className="text-center pb-4 border-b border-border/50">
             <h2 className="text-lg font-bold text-card-foreground mb-1">🏅 시상 기준 안내</h2>
-            <p className="text-xs font-bold text-primary mb-2">📅 산정 기간: 2026.04.01 ~ 2026.05.16</p>
+            <p className="text-xs font-bold text-primary mb-2">📅 산정 기간: 2026.04.01 ~ 2026.05.10</p>
             <p className="text-left text-xs text-muted-foreground">
               * 인증 기준 <br />- 2km 이상 또는 20분 이상 걷기, 달리기 기록 사진 인증<br /><br />모든 기록은 앱 인증 기준으로 확인합니다.<br />선정은 1️⃣ 출석상 → 2️⃣ 도전상 → 3️⃣ 뱃지상 → 4️⃣ 응원상 → 5️⃣ 랜덤상 순으로 진행됩니다.<br />앞선 부문에서 수상한 분은 이후 부문 후보에서 제외됩니다.
             </p>
