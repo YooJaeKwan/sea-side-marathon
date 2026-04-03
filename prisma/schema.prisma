@@ -112,6 +112,7 @@ model UserBadge {
   userId   String
   badgeId  String
   earnedAt DateTime @default(now())
+  notified Boolean  @default(false)
   badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

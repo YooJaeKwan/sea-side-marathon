@@ -102,6 +102,33 @@ export default function Home() {
     }
   }, [status, fetchPosts, activeTab, feedFilter]) // Add activeTab and feedFilter to refresh on navigation
 
+  // Check for unnotified badges on page load
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetch("/api/badges/unnotified")
+        .then((r) => r.ok ? r.json() : [])
+        .then((badges) => {
+          if (badges && badges.length > 0) {
+            setNewBadges(badges)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [status])
+
+  const markBadgesNotified = async () => {
+    try {
+      await fetch("/api/badges/unnotified", { method: "POST" })
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleBadgePopupClose = () => {
+    setNewBadges([])
+    markBadgesNotified()
+  }
+
   const handlePostCreated = (earnedBadges?: any[]) => {
     setShowNewPost(false)
     setEditingPost(null)
@@ -192,7 +219,7 @@ export default function Home() {
 
       {/* Badge Award Popup */}
       {newBadges.length > 0 && (
-        <BadgeAwardPopup badges={newBadges} onClose={() => setNewBadges([])} />
+        <BadgeAwardPopup badges={newBadges} onClose={handleBadgePopupClose} />
       )}
     </div>
   )
