@@ -14,21 +14,33 @@ export async function GET(req: Request) {
     const yearParam = searchParams.get("year")
     const monthParam = searchParams.get("month")
 
-    // Use KST for "Month" boundaries
+    // Use KST for date boundaries
     const now = new Date()
     const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000)
 
     const kstYear = yearParam ? parseInt(yearParam, 10) : kstNow.getUTCFullYear()
     const kstMonth = monthParam ? parseInt(monthParam, 10) - 1 : kstNow.getUTCMonth()
 
-    const startOfMonthKST = new Date(Date.UTC(kstYear, kstMonth, 1))
-    const endOfMonthKST = new Date(Date.UTC(kstYear, kstMonth + 1, 0, 23, 59, 59, 999))
+    // Check if this is the final ranking period (April 2026 = 4/1 ~ 5/16)
+    const isFinalPeriod = kstYear === 2026 && kstMonth === 3 // month is 0-indexed, so 3 = April
+
+    let startOfMonthKST: Date
+    let endOfMonthKST: Date
+
+    if (isFinalPeriod) {
+        // Fixed period: 2026-04-01 ~ 2026-05-16 KST
+        startOfMonthKST = new Date(Date.UTC(2026, 3, 1)) // April 1
+        endOfMonthKST = new Date(Date.UTC(2026, 4, 16, 23, 59, 59, 999)) // May 16
+    } else {
+        startOfMonthKST = new Date(Date.UTC(kstYear, kstMonth, 1))
+        endOfMonthKST = new Date(Date.UTC(kstYear, kstMonth + 1, 0, 23, 59, 59, 999))
+    }
 
     // Convert back to UTC for Prisma filter
     const startOfMonthUTC = new Date(startOfMonthKST.getTime() - 9 * 60 * 60 * 1000)
     const endOfMonthUTC = new Date(endOfMonthKST.getTime() - 9 * 60 * 60 * 1000)
 
-    // Get all users with their posts and comments this month
+    // Get all users with their posts, comments, and badges
     const users = await prisma.user.findMany({
         where: { isOnboarded: true },
         select: {
@@ -57,6 +69,9 @@ export async function GET(req: Request) {
                     },
                 },
                 select: { postId: true, post: { select: { userId: true } } },
+            },
+            badges: {
+                select: { id: true, badgeId: true, earnedAt: true },
             }
         },
     })
@@ -71,6 +86,9 @@ export async function GET(req: Request) {
         let pastTotalKm = 0
         let pastMaxDistance = 0
         let pastMaxMinutes = 0
+
+        let allTimeTotalKm = 0
+        let allTimeTotalMinutes = 0
 
         const validKstDays = new Set<number>()
         const currentKstDaysSet = new Set<number>()
@@ -87,6 +105,10 @@ export async function GET(req: Request) {
             const h = parseInt(parts[0] || "0", 10)
             const m = parseInt(parts[1] || "0", 10)
             const mins = h * 60 + m
+
+            // Accumulate all-time totals
+            allTimeTotalKm += p.distance
+            allTimeTotalMinutes += mins
 
             if (isPast) {
                 pastKstDaysSet.add(dayCode)
@@ -159,27 +181,60 @@ export async function GET(req: Request) {
             }
         })
 
-        // Determine candidate statuses (First time achieved THIS month)
+        // Determine candidate statuses
         const challengeConditions: string[] = []
-        if (pastMaxDistance < 5 && currentMaxDistance >= 5) {
-            challengeConditions.push("첫 5km 완주")
-        }
-        if (pastTotalKm < 20 && (pastTotalKm + currentTotalKm) >= 20) {
-            challengeConditions.push("누적 20km")
-        }
-        if (pastWeeksWithTwoRuns < 3 && totalWeeksWithTwoRuns >= 3) {
-            challengeConditions.push("첫 주 2회 3주")
-        }
-        if (pastMaxMinutes < 30 && currentMaxMinutes >= 30) {
-            challengeConditions.push("첫 30분 달리기")
+        if (isFinalPeriod) {
+            // Final period criteria: cumulative 30km from April, weekly 2x for 3 weeks
+            if (currentTotalKm >= 30) {
+                challengeConditions.push("누적 30km 달성")
+            }
+
+            // Calculate weeks with >= 2 runs for the current period only
+            const currentWeekCounts: Record<string, number> = {}
+            Array.from(currentKstDaysSet).forEach(dayCode => {
+                const y = Math.floor(dayCode / 10000)
+                const m = Math.floor((dayCode % 10000) / 100) - 1
+                const d = dayCode % 100
+                const date = new Date(Date.UTC(y, m, d))
+                date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7))
+                const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
+                const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+                const weekKey = `${date.getUTCFullYear()}-W${weekNo}`
+                currentWeekCounts[weekKey] = (currentWeekCounts[weekKey] || 0) + 1
+            })
+            let currentWeeksWithTwoRuns = 0
+            Object.values(currentWeekCounts).forEach(count => {
+                if (count >= 2) currentWeeksWithTwoRuns++
+            })
+            if (currentWeeksWithTwoRuns >= 3) {
+                challengeConditions.push("주 2회 3주 유지")
+            }
+        } else {
+            // Legacy monthly criteria
+            if (pastMaxDistance < 5 && currentMaxDistance >= 5) {
+                challengeConditions.push("첫 5km 완주")
+            }
+            if (pastTotalKm < 20 && (pastTotalKm + currentTotalKm) >= 20) {
+                challengeConditions.push("누적 20km")
+            }
+            if (pastWeeksWithTwoRuns < 3 && totalWeeksWithTwoRuns >= 3) {
+                challengeConditions.push("첫 주 2회 3주")
+            }
+            if (pastMaxMinutes < 30 && currentMaxMinutes >= 30) {
+                challengeConditions.push("첫 30분 달리기")
+            }
         }
 
-        const isCompletionCandidate = currentMaxDistance >= 5
         const isChallengeCandidate = challengeConditions.length > 0
+        const badgeCount = user.badges.length
 
         const totalHours = Math.floor(currentTotalMinutes / 60)
         const remainMins = currentTotalMinutes % 60
         const totalTimeStr = totalHours > 0 ? `${totalHours}시간 ${remainMins}분` : `${remainMins}분`
+
+        const allTimeHours = Math.floor(allTimeTotalMinutes / 60)
+        const allTimeRemainMins = allTimeTotalMinutes % 60
+        const allTimeTimeStr = allTimeHours > 0 ? `${allTimeHours}시간 ${allTimeRemainMins}분` : `${allTimeRemainMins}분`
 
         return {
             id: user.id,
@@ -192,8 +247,11 @@ export async function GET(req: Request) {
             totalTimeStr,
             isChallengeCandidate,
             challengeConditions,
-            isCompletionCandidate,
             cheerCount,
+            badgeCount,
+            allTimeTotalKm: Math.round(allTimeTotalKm * 10) / 10,
+            allTimeTotalMinutes,
+            allTimeTimeStr,
             hasAnyCert: user.posts.length > 0
         }
     })
@@ -222,10 +280,18 @@ export async function GET(req: Request) {
             conditions: u.challengeConditions
         }))
 
-    // 3. Completion Candidates
-    const completion = processedUsers
-        .filter(u => u.isCompletionCandidate)
-        .map(u => ({ id: u.id, name: u.name, initials: u.initials, avatar: u.avatar }))
+    // 3. Badge Ranking (Sort: badgeCount desc, allTimeTotalMinutes desc) — all-time stats
+    const badge = [...processedUsers]
+        .filter(u => u.badgeCount > 0)
+        .sort((a, b) => b.badgeCount - a.badgeCount || b.allTimeTotalMinutes - a.allTimeTotalMinutes)
+        .map((u, i) => ({
+            rank: i + 1,
+            name: u.name,
+            initials: u.initials,
+            avatar: u.avatar,
+            value: `${u.badgeCount}개`,
+            subValue: `${u.allTimeTotalKm}km · ${u.allTimeTimeStr}`
+        }))
 
     // 4. Cheer Ranking (Sort: cheerCount desc)
     const cheer = [...processedUsers]
@@ -233,15 +299,15 @@ export async function GET(req: Request) {
         .sort((a, b) => b.cheerCount - a.cheerCount)
         .map((u, i) => ({ rank: i + 1, name: u.name, initials: u.initials, avatar: u.avatar, value: `${u.cheerCount}회` }))
 
-    // 5. Random Candidates
+    // 5. Random Candidates (at least 1 cert in the current period)
     const random = processedUsers
-        .filter(u => u.hasAnyCert)
+        .filter(u => u.attendanceDays > 0)
         .map(u => ({ id: u.id, name: u.name, initials: u.initials, avatar: u.avatar }))
 
     return NextResponse.json({
         attendance,
         challenge,
-        completion,
+        badge,
         cheer,
         random
     })

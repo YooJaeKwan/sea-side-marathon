@@ -32,14 +32,14 @@ interface BadgeData {
 
 export function RankingPage() {
   const { data: session, status } = useSession()
-  const [activeTab, setActiveTab] = useState<"ranking" | "awards" | "crew">("crew")
+  const [activeTab, setActiveTab] = useState<"ranking" | "awards" | "crew">("ranking")
   const [crewData, setCrewData] = useState<any[] | null>(null)
 
   // New State Format
   const [rankingData, setRankingData] = useState<{
     attendance: any[]
     challenge: any[]
-    completion: any[]
+    badge: any[]
     cheer: any[]
     random: any[]
   } | null>(null)
@@ -52,6 +52,9 @@ export function RankingPage() {
 
   const [displayYear, setDisplayYear] = useState(currentYear)
   const [displayMonth, setDisplayMonth] = useState(currentMonth)
+
+  // Check if displaying the final ranking period
+  const isFinalPeriod = displayYear === 2026 && displayMonth === 4
 
   const handlePrevMonth = () => {
     if (displayMonth === 1) {
@@ -337,7 +340,7 @@ export function RankingPage() {
               : "text-muted-foreground"
           )}
         >
-          이달의 랭킹
+          마지막 랭킹
         </button>
         <button
           onClick={() => setActiveTab("awards")}
@@ -387,6 +390,14 @@ export function RankingPage() {
             </button>
           </div>
 
+          {/* Period Info */}
+          {isFinalPeriod && (
+            <div className="bg-primary/5 rounded-xl border border-primary/20 px-4 py-3 text-center">
+              <p className="text-xs font-bold text-primary">📅 산정 기간: 2026.04.01 ~ 2026.05.16</p>
+              <p className="text-[10px] text-muted-foreground mt-1">4월은 마라톤 당일까지의 기록을 기준으로 최종 시상합니다</p>
+            </div>
+          )}
+
           {renderRankingPodiumAndList(
             "출석상 랭킹",
             rankingData.attendance,
@@ -398,14 +409,16 @@ export function RankingPage() {
             "도전상 후보",
             rankingData.challenge,
             "아직 도전상 조건을 달성한 분이 없습니다.",
-            "첫 5km 완주, 누적 20km, 주 2회 3주 유지, 30분 달리기 첫 성공"
+            isFinalPeriod
+              ? "4월~ 누적 30km 달성 또는 주 2회 이상 걷기·달리기 3주 이상 유지"
+              : "첫 5km 완주, 누적 20km, 주 2회 3주 유지, 30분 달리기 첫 성공"
           )}
 
-          {renderCandidateGrid(
-            "완주상 후보",
-            rankingData.completion,
-            "아직 5km 이상 완주하신 분이 없습니다.",
-            "한 달에 한 번이라도 5km를 완주하신 분 대상 추첨"
+          {renderRankingPodiumAndList(
+            "뱃지상 랭킹",
+            rankingData.badge,
+            "아직 뱃지를 획득하신 분이 없습니다.",
+            "앱에서 뱃지를 가장 많이 모은 분 (동률 시 총 운동 시간 합산)"
           )}
 
           {renderRankingPodiumAndList(
@@ -427,8 +440,9 @@ export function RankingPage() {
           {/* ... existing awards criteria static UI ... */}
           <div className="text-center pb-4 border-b border-border/50">
             <h2 className="text-lg font-bold text-card-foreground mb-1">🏅 시상 기준 안내</h2>
+            <p className="text-xs font-bold text-primary mb-2">📅 산정 기간: 2026.04.01 ~ 2026.05.16</p>
             <p className="text-left text-xs text-muted-foreground">
-              * 인증 기준 <br />- 2km 이상 또는 20분 이상 걷기, 달리기 기록 사진 인증<br /><br />모든 기록은 앱 인증 기준으로 확인하며, 각 부문은 중복 수상 없이 진행됩니다.
+              * 인증 기준 <br />- 2km 이상 또는 20분 이상 걷기, 달리기 기록 사진 인증<br /><br />모든 기록은 앱 인증 기준으로 확인합니다.<br />선정은 1️⃣ 출석상 → 2️⃣ 도전상 → 3️⃣ 뱃지상 → 4️⃣ 응원상 → 5️⃣ 랜덤상 순으로 진행됩니다.<br />앞선 부문에서 수상한 분은 이후 부문 후보에서 제외됩니다.
             </p>
           </div>
 
@@ -442,8 +456,8 @@ export function RankingPage() {
                 <span className="text-[10px]">👉🏻</span> 가장 꾸준히 참여한 분
               </p>
               <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
-                <li>한 달 동안 인증 횟수가 가장 많은 분 선정</li>
-                <li>동률일 경우, 총 운동 시간 합산으로 결정</li>
+                <li>한 달 동안 걷기+달리기 횟수가 가장 많은 분</li>
+                <li>횟수가 동일한 경우, 총 운동 시간 합산으로 선정</li>
               </ul>
             </div>
 
@@ -453,30 +467,27 @@ export function RankingPage() {
                 <span>2️⃣</span> 도전상
               </h3>
               <p className="text-xs font-bold text-card-foreground mb-1.5 flex items-center gap-1">
-                <span className="text-[10px]">👉🏻</span> 이번 달, 스스로 한 단계 성장한 분
+                <span className="text-[10px]">👉🏻</span> 이번 달, 스스로 한 단계 성장한 분 💪
               </p>
               <p className="text-xs text-muted-foreground mb-1.5">아래 항목 중 1개 이상 달성 시 후보가 됩니다!</p>
               <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
-                <li>5km 첫 완주</li>
-                <li>누적 20km 달성</li>
-                <li>주 2회 이상 걷기,달리기를 3주 이상 유지</li>
-                <li>30분 연속 달리기 첫 성공</li>
+                <li>4월~ 누적 30km 달성</li>
+                <li>주 2회 이상 걷기, 달리기를 3주 이상 유지</li>
               </ul>
               <p className="text-[10px] text-primary mt-1.5 italic">* 위 조건 달성자 중 추첨으로 선정</p>
             </div>
 
-            {/* 3. 완주상 */}
+            {/* 3. 뱃지상 */}
             <div>
               <h3 className="text-sm font-bold text-primary flex items-center gap-1.5 mb-2">
-                <span>3️⃣</span> 완주상
+                <span>3️⃣</span> 뱃지상
               </h3>
               <p className="text-xs font-bold text-card-foreground mb-1.5 flex items-center gap-1">
-                <span className="text-[10px]">👉🏻</span> 마라톤 완주를 응원합니다 🏃‍♂️
+                <span className="text-[10px]">👉🏻</span> 앱에서 뱃지를 가장 많이 모은 분
               </p>
               <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
-                <li>한 달 동안 5km 이상 1회 이상 인증 시 후보</li>
+                <li>갯수가 동일한 경우, 총 운동 시간 합산으로 선정</li>
               </ul>
-              <p className="text-[10px] text-primary mt-1.5 italic">* 후보 중 무작위 추첨</p>
             </div>
 
             {/* 4. 응원상 */}
@@ -488,8 +499,8 @@ export function RankingPage() {
                 <span className="text-[10px]">👉🏻</span> 공동체 분위기를 살려준 분
               </p>
               <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
-                <li>댓글 및 이모지 반응을 통해 응원 활동이 활발한 분</li>
-                <li>다른 크루원의 게시글에 남긴 댓글 및 반응 총 횟수를 합산하여 선정합니다.</li>
+                <li>댓글 및 응원 활동이 활발한 분</li>
+                <li>단순 하트 수가 아닌, 다양한 사람에게 응원하신 분을 우선 고려</li>
               </ul>
             </div>
 
@@ -499,9 +510,14 @@ export function RankingPage() {
                 <span>5️⃣</span> 랜덤상
               </h3>
               <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 marker:text-primary/30">
-                <li>최소 1회 이상 걷기,달리기 인증 시 자동 후보</li>
+                <li>최소 1회 이상 걷기, 달리기 인증 시 자동 후보</li>
               </ul>
               <p className="text-[10px] text-primary mt-1.5 italic">* 후보 중 무작위 추첨</p>
+            </div>
+
+            {/* 참고 */}
+            <div className="pt-4 border-t border-border/50">
+              <p className="text-xs text-muted-foreground">📌 더 많은 분들께 기회를 드리고자 이전 월 수상자는 동일 부문에서는 제외됩니다 😊</p>
             </div>
           </div>
         </div>
