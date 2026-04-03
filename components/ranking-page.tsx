@@ -394,7 +394,6 @@ export function RankingPage() {
           {isFinalPeriod && (
             <div className="bg-primary/5 rounded-xl border border-primary/20 px-4 py-3 text-center">
               <p className="text-xs font-bold text-primary">📅 산정 기간: 2026.04.01 ~ 2026.05.10</p>
-              <p className="text-[10px] text-muted-foreground mt-1">4월은 마라톤 당일까지의 기록을 기준으로 최종 시상합니다</p>
             </div>
           )}
 
