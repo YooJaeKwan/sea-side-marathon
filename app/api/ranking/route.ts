@@ -26,9 +26,9 @@ export async function GET(req: Request) {
 
     // April winners exclusion lists (per category)
     const aprilWinnerExclusions: Record<string, string[]> = {
-        attendance: ["행복한멧돼지"],
+        attendance: ["행복한멧돼지", "회개러너"],
         challenge: ["아니따", "차차"],
-        badge: ["김의영"],  // real name match
+        badge: ["김의영", "회개러너"],  // real name match
         cheer: ["슬기짱", "회개러너"],
         random: ["찡타로"],
     }

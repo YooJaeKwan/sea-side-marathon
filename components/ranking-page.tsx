@@ -405,9 +405,9 @@ export function RankingPage() {
               </p>
               <p className="text-[10px] text-amber-600 mb-2">아래 분들은 3월에 이미 수상하셨으므로 해당 부문에서 제외됩니다.</p>
               <div className="space-y-1">
-                <p className="text-[10px] text-amber-800"><span className="font-bold">출석상</span> · 행복한멧돼지님</p>
+                <p className="text-[10px] text-amber-800"><span className="font-bold">출석상</span> · 행복한멧돼지님, 회개러너님</p>
                 <p className="text-[10px] text-amber-800"><span className="font-bold">도전상</span> · 아니따님, 차차님</p>
-                <p className="text-[10px] text-amber-800"><span className="font-bold">완주상</span> · 용용님 (김의영찡)</p>
+                <p className="text-[10px] text-amber-800"><span className="font-bold">완주상</span> · 용용님 (김의영찡), 회개러너님</p>
                 <p className="text-[10px] text-amber-800"><span className="font-bold">응원상</span> · 슬기짱님, 회개러너님</p>
                 <p className="text-[10px] text-amber-800"><span className="font-bold">랜덤상</span> · 찡타로님</p>
               </div>
